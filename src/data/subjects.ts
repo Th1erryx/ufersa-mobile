@@ -1,0 +1,69 @@
+import type { Subject } from '@/types'
+
+/** Disciplinas do semestre.
+ *  Edite aqui para refletir sua grade atual. */
+export const subjects: Subject[] = [
+  {
+    id: 'poo',
+    name: 'Programação Orientada a Objetos',
+    code: 'INF0007',
+    professor: 'Prof. Ana Luísa Medeiros',
+    room: 'Sala 12',
+    workload: 60,
+    credits: 4,
+    tone: 0,
+  },
+  {
+    id: 'calc',
+    name: 'Cálculo I',
+    code: 'MAT0003',
+    professor: 'Prof. Ricardo Tavares',
+    room: 'Sala 04',
+    workload: 60,
+    credits: 4,
+    tone: 1,
+  },
+  {
+    id: 'bd',
+    name: 'Banco de Dados',
+    code: 'INF0021',
+    professor: 'Prof. Carlos Eduardo Silva',
+    room: 'Lab 03',
+    workload: 60,
+    credits: 4,
+    tone: 2,
+  },
+  {
+    id: 'so',
+    name: 'Sistemas Operacionais',
+    code: 'INF0033',
+    professor: 'Prof. Mariana Costa',
+    room: 'Lab 01',
+    workload: 60,
+    credits: 4,
+    tone: 3,
+  },
+  {
+    id: 'arq',
+    name: 'Arquitetura de Computadores',
+    code: 'INF0015',
+    professor: 'Prof. Jorge Ferreira',
+    room: 'Sala 08',
+    workload: 60,
+    credits: 4,
+    tone: 4,
+  },
+  {
+    id: 'socc',
+    name: 'Comunicação e Expressão',
+    code: 'LET0102',
+    professor: 'Prof. Beatriz Almeida',
+    room: 'Sala 02',
+    workload: 30,
+    credits: 2,
+    tone: 5,
+  },
+]
+
+export const subjectById = (id: string): Subject | undefined =>
+  subjects.find((s) => s.id === id)
