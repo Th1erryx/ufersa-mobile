@@ -69,6 +69,21 @@ android/                 # projeto Android (gradle), configurado pelo Capacitor
 - **UIDs**: helper `uid(prefix)` (`subj-*`, `ent-*`, `mat-*`).
 - Plugins nativos do Capacitor importados dinamicamente (`import('@capacitor/...')`) para não inflar o bundle web.
 
+## Decisões de arquitetura (porquês)
+
+Estas escolhas foram deliberadas — respeite-as e **não as reverta sem antes conversar com o usuário sobre o cenário que as justificaria**:
+
+- **100% offline, sem backend**: decisão consciente. O app é pessoal e os dados são locais. Backend **só** faria sentido se um dia houver distribuição central de materiais (professor → turma) ou sincronização entre dispositivos. Antes disso, é over-engineering.
+- **Sem login**: adiado de propósito. Exigiria infraestrutura de contas (Firebase Auth, Supabase…), conexão com a internet e manutenção. Só vale no cenário acima.
+- **Materiais ficam no dispositivo**: binário no disco do app (APK) ou IndexedDB (web); metadados em localStorage. Preserva a natureza offline e dispensa serviço externo.
+- **QR do RU é por usuário**: impossível conhecer o QR de cada pessoa, então é configurável nas Configurações (upload de imagem → data URL em `localStorage qrCode`). Valor padrão vazio mostra QR mock (`src/data/qrCode.ts`).
+- **Campus configurável**: o autor é de Pau dos Ferros, mas qualquer pessoa pode trocar (4 campi, padrão Pau dos Ferros). Horários do RU seguem o portal oficial e são editáveis em `src/data/campuses.ts`.
+- **APK via Capacitor** em vez de instalação por PWA no navegador: opção "profissional". `appId: br.edu.ufersa.mobile`.
+- **Renomeado Pocket → Mobile preservando dados**: a migração automática de prefixos (`ufersa-pocket:` → `ufersa-mobile:`) e do IndexedDB (`ufersa-pocket-files` → `ufersa-mobile-files`) é intencional — nunca remover a compatibilidade legada.
+- **Sem biblioteca de navegação/estado**: tabs manuais no `App.tsx` + Context e localStorage. O app é pequeno; isso evita dependências desnecessárias.
+- **Links úteis com favicons locais** (`public/favicons/`): baixados e versionados para manter o offline-first — não usar serviço externo de favicons em runtime.
+- **Identidade visual própria** (logo QR+capelo, fonte `design/logo.svg`): ao mudar o logo, regenerar os PNGs e os mipmaps Android (ver "Regenerando ícones").
+
 ## Estado atual (branch `develop`)
 
 - **QR do RU**: mock por padrão (`src/data/qrCode.ts`, `USER_QR_CODE = ''`); o usuário define o próprio QR nas Configurações (upload de imagem → data URL no localStorage `qrCode`).
