@@ -1,30 +1,43 @@
 import { useState } from 'react'
 import {
   Bell,
+  Building2,
+  CheckCircle2,
   ChevronRight,
+  Download,
   Monitor,
   Moon,
   PencilLine,
   QrCode,
+  RotateCcw,
+  Share2,
   Sun,
+  Upload,
 } from 'lucide-react'
 import { Pressable } from '@/components/Pressable'
+import { useInstallPrompt } from '@/hooks/useInstallPrompt'
 import { useLocalStorage } from '@/hooks/useLocalStorage'
 import { useProfile } from '@/hooks/useProfile'
 import { useUserQrCode } from '@/hooks/useUserQrCode'
+import { useCampus, campusOptions } from '@/hooks/useCampus'
+import { useSchedule } from '@/context/ScheduleContext'
 import type { ThemePreference } from '@/types'
 
 interface Props {
   preference: ThemePreference
   setPreference: (p: ThemePreference) => void
   onClose: () => void
+  onEditSubjects: () => void
 }
 
 type Section = 'pessoal' | 'qr' | null
 
-export function SettingsPage({ preference, setPreference, onClose }: Props) {
+export function SettingsPage({ preference, setPreference, onClose, onEditSubjects }: Props) {
   const { profile, update, reset: resetProfile } = useProfile()
-  const { setOverride, reset: resetQr } = useUserQrCode()
+  const { qrCode, setOverride, reset: resetQr } = useUserQrCode()
+  const { campus, setCampusId } = useCampus()
+  const { canInstall, isIos, isStandalone, promptInstall } = useInstallPrompt()
+  const { resetAll: resetSchedule } = useSchedule()
   const [notifications, setNotifications] = useLocalStorage<{ classes: boolean; ru: boolean }>(
     'notifications',
     { classes: true, ru: true },
@@ -101,6 +114,104 @@ export function SettingsPage({ preference, setPreference, onClose }: Props) {
           </section>
 
           <section>
+            <SectionTitle>Campus</SectionTitle>
+            <div className="overflow-hidden rounded-3xl border border-zinc-200/80 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+              {campusOptions.map((option, index) => {
+                const active = campus.id === option.id
+                return (
+                  <div key={option.id}>
+                    {index > 0 && <div className="mx-5 h-px bg-zinc-100 dark:bg-zinc-800" />}
+                    <button
+                      onClick={() => setCampusId(option.id)}
+                      aria-pressed={active}
+                      className={`flex w-full items-center gap-3 px-5 py-4 text-left transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-800/60 ${
+                        active ? 'bg-brand-500/5 dark:bg-brand-500/10' : ''
+                      }`}
+                    >
+                      <span
+                        className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl transition-colors ${
+                          active
+                            ? 'bg-brand-500 text-white'
+                            : 'bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400'
+                        }`}
+                      >
+                        <Building2 size={18} strokeWidth={1.9} />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-sm font-semibold text-zinc-800 dark:text-zinc-200">
+                          {option.name}
+                        </span>
+                        <span className="block text-xs text-zinc-500 dark:text-zinc-400">
+                          RU: almoço {option.ru.lunch} · jantar {option.ru.dinner}
+                        </span>
+                      </span>
+                      {active && (
+                        <CheckCircle2 size={18} className="shrink-0 text-brand-500" strokeWidth={2} />
+                      )}
+                    </button>
+                  </div>
+                )
+              })}
+            </div>
+            <p className="mt-1.5 px-1 text-[11px] text-zinc-400 dark:text-zinc-500">
+              O campus selecionado define os horários exibidos na tela do QR do RU.
+            </p>
+          </section>
+
+          <section>
+            <SectionTitle>Instalar</SectionTitle>
+            {canInstall ? (
+              <div className="rounded-3xl border border-brand-200 bg-brand-50/60 p-5 dark:border-brand-500/25 dark:bg-brand-500/10">
+                <div className="flex items-start gap-3">
+                  <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-brand-500 text-white shadow-card">
+                    <Download size={20} strokeWidth={2} />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-bold text-zinc-900 dark:text-zinc-50">
+                      Instalar o app
+                    </p>
+                    <p className="mt-0.5 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
+                      Adicione à tela inicial para abrir em tela cheia e usar offline.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={promptInstall}
+                  className="mt-4 w-full rounded-full bg-brand-500 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-600"
+                >
+                  Instalar
+                </button>
+              </div>
+            ) : isIos && !isStandalone ? (
+              <div className="rounded-3xl border border-zinc-200/80 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+                <div className="flex items-start gap-3">
+                  <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
+                    <Share2 size={20} strokeWidth={1.9} />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-bold text-zinc-900 dark:text-zinc-50">
+                      Instalar no iPhone/iPad
+                    </p>
+                    <p className="mt-0.5 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
+                      Toque em <span className="font-semibold">Compartilhar</span> na barra do Safari
+                      e escolha <span className="font-semibold">Adicionar à Tela de Início</span>.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : isStandalone ? (
+              <div className="flex items-center gap-3 rounded-3xl border border-zinc-200/80 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-brand-500/10 text-brand-600 dark:bg-brand-500/15 dark:text-brand-400">
+                  <CheckCircle2 size={20} strokeWidth={1.9} />
+                </span>
+                <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
+                  App instalado na tela inicial
+                </p>
+              </div>
+            ) : null}
+          </section>
+
+          <section>
             <SectionTitle>Notificações</SectionTitle>
             <div className="overflow-hidden rounded-3xl border border-zinc-200/80 bg-white dark:border-zinc-800 dark:bg-zinc-900">
               <ToggleRow
@@ -161,18 +272,44 @@ export function SettingsPage({ preference, setPreference, onClose }: Props) {
                 label="Editar QR Code"
                 expanded={openSection === 'qr'}
                 onClick={() => {
-                  setQrInput('')
+                  setQrInput(qrCode)
                   setOpenSection(openSection === 'qr' ? null : 'qr')
                 }}
               >
+                {qrInput && (
+                  <img
+                    src={qrInput}
+                    alt="Prévia do QR Code"
+                    className="mb-3 h-28 w-28 rounded-2xl border border-zinc-200 bg-white object-contain p-1 dark:border-zinc-700"
+                  />
+                )}
                 <Field
-                  label="Caminho do QR Code"
+                  label="Imagem ou caminho do QR Code"
                   value={qrInput}
                   onChange={setQrInput}
-                  placeholder="Ex.: /qr-code.png ou data:image/png;base64,..."
+                  placeholder="data:image/png;base64,... ou /qr-code.png"
                 />
+                <label className="mb-2 flex items-center justify-center gap-2 rounded-full border border-dashed border-zinc-300 py-2.5 text-sm font-semibold text-zinc-600 transition-colors hover:border-brand-500 hover:text-brand-600 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-brand-500 dark:hover:text-brand-400">
+                  <Upload size={15} strokeWidth={2.2} />
+                  Escolher imagem do QR
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="sr-only"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0]
+                      if (!file) return
+                      if (file.size > 3 * 1024 * 1024) return
+                      const reader = new FileReader()
+                      reader.onload = () => setQrInput(reader.result as string)
+                      reader.readAsDataURL(file)
+                      e.target.value = ''
+                    }}
+                  />
+                </label>
                 <p className="mt-1 text-[11px] text-zinc-400 dark:text-zinc-500">
-                  Deixe o valor padrão (src/data/qrCode.ts) ou informe o caminho do seu arquivo.
+                  Escolha uma imagem (PNG/JPG) do seu QR Code do RU. Sem imagem, o app mostra um
+                  QR de demonstração.
                 </p>
                 <ActionRow onSave={saveQr} onReset={() => resetQr()} />
               </DataButton>
@@ -180,10 +317,33 @@ export function SettingsPage({ preference, setPreference, onClose }: Props) {
               <DataButton
                 icon={PencilLine}
                 label="Editar disciplinas"
-                onClick={() => {}}
+                onClick={onEditSubjects}
                 plain
               >
                 <Instruction />
+              </DataButton>
+              <div className="mx-5 h-px bg-zinc-100 dark:bg-zinc-800" />
+              <DataButton
+                icon={RotateCcw}
+                label="Restaurar dados padrão"
+                onClick={() => {}}
+                plain
+              >
+                <p className="text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
+                  Restaura as disciplinas e horários originais de{' '}
+                  <code className="rounded bg-zinc-100 px-1 py-0.5 text-[11px] text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+                    src/data
+                  </code>
+                  . As alterações feitas aqui serão perdidas.
+                </p>
+                <div className="flex gap-2 pt-1">
+                  <button
+                    onClick={resetSchedule}
+                    className="flex-1 rounded-full bg-rose-500 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-rose-600"
+                  >
+                    Restaurar agora
+                  </button>
+                </div>
               </DataButton>
             </div>
           </section>
@@ -191,7 +351,7 @@ export function SettingsPage({ preference, setPreference, onClose }: Props) {
           <section>
             <SectionTitle>Sobre</SectionTitle>
             <div className="rounded-3xl border border-zinc-200/80 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
-              <p className="text-base font-bold text-zinc-900 dark:text-zinc-50">UFERSA Pocket</p>
+              <p className="text-base font-bold text-zinc-900 dark:text-zinc-50">UFERSA Mobile</p>
               <p className="mt-0.5 text-sm text-zinc-500 dark:text-zinc-400">
                 Sua carteira universitária digital no bolso.
               </p>

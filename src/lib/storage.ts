@@ -1,6 +1,33 @@
 /** Wrappers seguros em volta do localStorage (falham silenciosamente). */
 
-const PREFIX = 'ufersa-pocket:'
+const OLD_PREFIX = 'ufersa-pocket:'
+const PREFIX = 'ufersa-mobile:'
+
+let migrated = false
+
+/** Migra chaves do prefixo antigo (ufersa-pocket:) para o atual. */
+function migrateLegacyKeys(): void {
+  if (migrated) return
+  migrated = true
+  try {
+    const keys: string[] = []
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i)
+      if (key && key.startsWith(OLD_PREFIX)) keys.push(key)
+    }
+    for (const key of keys) {
+      const next = PREFIX + key.slice(OLD_PREFIX.length)
+      if (localStorage.getItem(next) === null) {
+        localStorage.setItem(next, localStorage.getItem(key) ?? '')
+      }
+      localStorage.removeItem(key)
+    }
+  } catch {
+    /* migração indisponível */
+  }
+}
+
+migrateLegacyKeys()
 
 export function loadJson<T>(key: string, fallback: T): T {
   try {

@@ -1,14 +1,15 @@
 import { useMemo } from 'react'
-import { CalendarDays, ExternalLink, PartyPopper, QrCode, Settings } from 'lucide-react'
+import { CalendarDays, ExternalLink, PartyPopper, QrCode } from 'lucide-react'
 import { Pressable } from '@/components/Pressable'
+import { PageHeader } from '@/components/PageHeader'
 import { ScheduleItem } from '@/components/ScheduleItem'
 import { EmptyState } from '@/components/EmptyState'
-import { subjectById } from '@/data/subjects'
 import { quickLinks } from '@/data/quickLinks'
-import { todayKey, todaysEntries, classStatus, formatWeekday } from '@/lib/schedule'
+import { todaysEntries, classStatus, formatWeekday, isWeekend } from '@/lib/schedule'
 import { minutesFromNow, formatCountdown, formatDuration } from '@/lib/time'
 import { useProfile } from '@/hooks/useProfile'
 import { useNow } from '@/hooks/useNow'
+import { useSchedule } from '@/context/ScheduleContext'
 import type { TabId } from '@/components/tabs'
 
 interface Props {
@@ -18,43 +19,31 @@ interface Props {
 
 export function HomePage({ onNavigate, onOpenSettings }: Props) {
   const { profile } = useProfile()
+  const { subjects, entries } = useSchedule()
   const now = useNow()
-  const key = todayKey(now)
-  const entries = todaysEntries(now)
-  const { current, next } = useMemo(() => classStatus(entries, now), [entries, now])
+  const todays = todaysEntries(entries, now)
+  const { current, next } = useMemo(() => classStatus(todays, now), [todays, now])
+
+  const subjectById = (id?: string) => (id ? subjects.find((s) => s.id === id) : undefined)
 
   const featured = current ?? next
-  const featuredSubject = featured ? subjectById(featured.entry.subjectId) : undefined
+  const featuredSubject = featured?.entry.subjectId ? subjectById(featured.entry.subjectId) : undefined
+  const featuredIsEvent = featured ? !featuredSubject : false
+  const featuredName = featuredSubject?.name ?? featured?.entry.title
+  const featuredRoom = featuredSubject?.room ?? featured?.entry.location
+  const featuredProfessor = featuredSubject?.professor
   const featuredCountdown = featured
     ? minutesFromNow(now, current ? featured.entry.endTime : featured.entry.startTime)
     : 0
 
   return (
     <div className="flex h-full flex-col px-4">
-      <header className="sticky top-0 z-20 -mx-4 bg-zinc-50/85 px-4 pt-4 pb-2 backdrop-blur-md dark:bg-zinc-950/80">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <span className="grid h-9 w-9 place-items-center rounded-xl bg-brand-500 text-white shadow-card">
-              <QrCode size={17} strokeWidth={2.2} />
-            </span>
-            <div className="leading-tight">
-              <p className="text-[16px] font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
-                UFERSA Pocket
-              </p>
-              <p className="text-[11px] font-medium text-zinc-400 dark:text-zinc-500">
-                Carteira universitária
-              </p>
-            </div>
-          </div>
-          <Pressable
-            onClick={onOpenSettings}
-            aria-label="Abrir configurações"
-            className="grid h-11 w-11 place-items-center rounded-full border border-zinc-200/80 bg-white text-zinc-600 shadow-card transition-all duration-200 hover:scale-105 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
-          >
-            <Settings size={20} strokeWidth={1.9} />
-          </Pressable>
-        </div>
-      </header>
+      <PageHeader
+        title="UFERSA Mobile"
+        subtitle="Carteira universitária"
+        onSettings={onOpenSettings}
+        brand
+      />
 
       <div className="flex-1 space-y-6">
         <section className="animate-slide-up">
@@ -68,15 +57,17 @@ export function HomePage({ onNavigate, onOpenSettings }: Props) {
 
         <section className="animate-slide-up" style={{ animationDelay: '40ms' }}>
           <p className="mb-2 px-1 text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-500">
-            {featured ? (key ? 'Próxima aula' : 'Próxima atividade') : 'Sem aula'}
+            {featured ? (featuredIsEvent ? 'Próxima atividade' : 'Próxima aula') : 'Sem agenda'}
           </p>
 
-          {featured && featuredSubject ? (
+          {featured && featuredName ? (
             <div
               className={`relative overflow-hidden rounded-3xl border p-5 transition-colors duration-300 ${
-                current
-                  ? 'border-brand-200 bg-brand-50/70 dark:border-brand-500/25 dark:bg-brand-500/10'
-                  : 'border-zinc-200/80 bg-white shadow-card dark:border-zinc-800 dark:bg-zinc-900'
+                featuredIsEvent
+                  ? 'border-dashed border-violet-300 bg-violet-50/50 dark:border-violet-500/30 dark:bg-violet-500/5'
+                  : current
+                    ? 'border-brand-200 bg-brand-50/70 dark:border-brand-500/25 dark:bg-brand-500/10'
+                    : 'border-zinc-200/80 bg-white shadow-card dark:border-zinc-800 dark:bg-zinc-900'
               }`}
             >
               {current && (
@@ -85,25 +76,36 @@ export function HomePage({ onNavigate, onOpenSettings }: Props) {
                   Em andamento
                 </span>
               )}
+              {featuredIsEvent && (
+                <span className="absolute right-4 top-4 rounded-full bg-violet-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-violet-700 dark:bg-violet-500/15 dark:text-violet-300">
+                  Evento
+                </span>
+              )}
               <p
                 className={`text-lg font-bold leading-snug text-zinc-900 dark:text-zinc-50 ${
                   current ? 'pr-28' : ''
                 }`}
               >
-                {featuredSubject.name}
+                {featuredName}
               </p>
               <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
                 <span className="font-semibold tabular-nums text-zinc-800 dark:text-zinc-200">
                   {featured.entry.startTime} — {featured.entry.endTime}
                 </span>
-                <span className="text-zinc-300 dark:text-zinc-600">·</span>
-                <span className="font-medium text-zinc-500 dark:text-zinc-400">
-                  {featuredSubject.room}
-                </span>
+                {featuredRoom && (
+                  <>
+                    <span className="text-zinc-300 dark:text-zinc-600">·</span>
+                    <span className="font-medium text-zinc-500 dark:text-zinc-400">
+                      {featuredRoom}
+                    </span>
+                  </>
+                )}
               </div>
-              <p className="mt-0.5 text-sm text-zinc-500 dark:text-zinc-400">
-                {featuredSubject.professor}
-              </p>
+              {featuredProfessor && (
+                <p className="mt-0.5 text-sm text-zinc-500 dark:text-zinc-400">
+                  {featuredProfessor}
+                </p>
+              )}
               <div className="mt-4 flex items-center gap-2">
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-500/10 px-3 py-1.5 text-xs font-semibold text-brand-700 dark:bg-brand-500/15 dark:text-brand-300">
                   {current ? (
@@ -124,12 +126,12 @@ export function HomePage({ onNavigate, onOpenSettings }: Props) {
               </span>
               <div>
                 <p className="font-semibold text-zinc-900 dark:text-zinc-100">
-                  {key ? 'Você não tem aulas hoje' : 'Fim de semana, aproveite!'} 🎉
+                  {isWeekend(now) ? 'Fim de semana, aproveite!' : 'Você não tem aulas hoje'} 🎉
                 </p>
                 <p className="mt-0.5 text-sm text-zinc-500 dark:text-zinc-400">
-                  {key
-                    ? 'Nenhuma disciplina programada para hoje.'
-                    : 'A semana acabou, descanse um pouco.'}
+                  {isWeekend(now)
+                    ? 'Descanse ou adicione um evento na Grade.'
+                    : 'Nenhuma aula ou evento programado para hoje.'}
                 </p>
               </div>
             </div>
@@ -171,20 +173,19 @@ export function HomePage({ onNavigate, onOpenSettings }: Props) {
           <p className="mb-3 px-1 text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-500">
             Hoje
           </p>
-          {entries.length > 0 ? (
+          {todays.length > 0 ? (
             <div>
-              {entries.map((entry) => {
-                const subject = subjectById(entry.subjectId)
-                if (!subject) return null
+              {todays.map((entry) => {
+                const subject = entry.subjectId ? subjectById(entry.subjectId) : undefined
                 const isCurrent = current?.entry.id === entry.id
                 const isNext = next?.entry.id === entry.id
                 return (
                   <ScheduleItem
                     key={entry.id}
                     time={entry.startTime}
-                    title={subject.name}
-                    room={subject.room}
-                    professor={subject.professor}
+                    title={subject?.name ?? entry.title ?? ''}
+                    room={subject?.room ?? entry.location}
+                    professor={subject?.professor}
                     duration={formatDuration(entry.startTime, entry.endTime)}
                     highlight={isCurrent ? 'current' : isNext ? 'next' : 'none'}
                   />
@@ -194,7 +195,7 @@ export function HomePage({ onNavigate, onOpenSettings }: Props) {
           ) : (
             <EmptyState
               icon={CalendarDays}
-              title={key ? 'Nenhuma aula hoje' : 'Fim de semana'}
+              title={isWeekend(now) ? 'Fim de semana' : 'Nenhuma atividade hoje'}
               description="Aproveite o tempo livre."
             />
           )}
@@ -204,7 +205,7 @@ export function HomePage({ onNavigate, onOpenSettings }: Props) {
             Links úteis
           </p>
           <div className="grid grid-cols-2 gap-3">
-            {quickLinks.map(({ id, label, url, icon: Icon }) => (
+            {quickLinks.map(({ id, label, url, favicon }) => (
               <a
                 key={id}
                 href={url}
@@ -213,15 +214,20 @@ export function HomePage({ onNavigate, onOpenSettings }: Props) {
                 aria-label={`Abrir ${label} em nova aba`}
                 className="group flex items-center gap-3 rounded-2xl border border-zinc-200/80 bg-white px-3.5 py-3 shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-cardHover active:scale-[0.97] dark:border-zinc-800 dark:bg-zinc-900"
               >
-                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-zinc-100 text-zinc-600 transition-transform duration-200 group-hover:scale-110 dark:bg-zinc-800 dark:text-zinc-300">
-                  <Icon size={17} strokeWidth={1.9} />
+                <span className="grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-xl bg-zinc-100 transition-transform duration-200 group-hover:scale-110 dark:bg-zinc-800">
+                  <img
+                    src={favicon}
+                    alt=""
+                    loading="lazy"
+                    className="h-5 w-5 object-contain"
+                  />
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm font-semibold text-zinc-900 dark:text-zinc-100">
                     {label}
                   </span>
-                  <span className="block text-[11px] text-zinc-400 dark:text-zinc-500">
-                    ufersa.edu.br
+                  <span className="block truncate text-[11px] text-zinc-400 dark:text-zinc-500">
+                    {url.replace(/^https?:\/\/(www\.)?/, '')}
                   </span>
                 </span>
                 <ExternalLink

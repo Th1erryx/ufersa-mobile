@@ -1,11 +1,13 @@
 import { useState } from 'react'
-import { ChevronRight, Clock3, User } from 'lucide-react'
+import { BookOpen, ChevronRight, Clock3, Plus, User } from 'lucide-react'
 import { PageHeader } from '@/components/PageHeader'
 import { Pressable } from '@/components/Pressable'
 import { SubjectDetailModal } from '@/components/SubjectDetailModal'
-import { subjects } from '@/data/subjects'
-import { schedule, dayNames } from '@/data/schedule'
+import { SubjectFormModal } from '@/components/SubjectFormModal'
+import { EmptyState } from '@/components/EmptyState'
+import { dayNames } from '@/data/schedule'
 import { toneFor } from '@/lib/subjectTone'
+import { useSchedule } from '@/context/ScheduleContext'
 import type { Subject } from '@/types'
 
 interface Props {
@@ -13,10 +15,12 @@ interface Props {
 }
 
 export function SubjectsPage({ onOpenSettings }: Props) {
+  const { subjects, entries } = useSchedule()
   const [selected, setSelected] = useState<Subject | null>(null)
+  const [creating, setCreating] = useState(false)
 
   const summary = (id: string) => {
-    const classes = schedule.filter((e) => e.subjectId === id)
+    const classes = entries.filter((e) => e.subjectId === id)
     if (classes.length === 0) return 'Sem horários'
     const first = classes[0]
     return `${dayNames[first.day]} · ${first.startTime}`
@@ -26,7 +30,7 @@ export function SubjectsPage({ onOpenSettings }: Props) {
     <div className="flex h-full flex-col px-4">
       <PageHeader
         title="Disciplinas"
-        subtitle={`${subjects.length} disciplinas no período`}
+        subtitle={`${subjects.length} disciplina${subjects.length === 1 ? '' : 's'} no período`}
         onSettings={onOpenSettings}
       />
 
@@ -51,7 +55,7 @@ export function SubjectsPage({ onOpenSettings }: Props) {
                   <span className={`font-semibold ${tone.weekText}`}>{subject.code}</span>
                   <span className="text-zinc-300 dark:text-zinc-600">·</span>
                   <User size={12} className="shrink-0" />
-                  <span className="truncate">{subject.professor}</span>
+                  <span className="truncate">{subject.professor || '—'}</span>
                 </p>
                 <p className="mt-1 flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400">
                   <Clock3 size={12} className="shrink-0" />
@@ -67,9 +71,29 @@ export function SubjectsPage({ onOpenSettings }: Props) {
             </Pressable>
           )
         })}
+
+        <Pressable
+          onClick={() => setCreating(true)}
+          aria-label="Adicionar nova disciplina"
+          className="flex w-full items-center justify-center gap-2 rounded-3xl border border-dashed border-zinc-300 bg-transparent py-4 text-sm font-semibold text-zinc-500 transition-all duration-200 hover:border-brand-500 hover:text-brand-600 active:scale-[0.98] dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-brand-500 dark:hover:text-brand-400"
+        >
+          <Plus size={18} strokeWidth={2.2} />
+          Nova disciplina
+        </Pressable>
       </div>
 
+      {subjects.length === 0 && (
+        <div className="mt-3">
+          <EmptyState
+            icon={BookOpen}
+            title="Nenhuma disciplina"
+            description="Toque em Nova disciplina para começar sua grade."
+          />
+        </div>
+      )}
+
       {selected && <SubjectDetailModal subject={selected} onClose={() => setSelected(null)} />}
+      {creating && <SubjectFormModal onClose={() => setCreating(false)} />}
     </div>
   )
 }

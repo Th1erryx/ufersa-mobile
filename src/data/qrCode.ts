@@ -6,11 +6,3 @@
  *  Com o valor vazio (""), o app exibe um QR Code fake de demonstração.
  *  Não espalhe essa informação pelo código. */
 export const USER_QR_CODE = ''
-
-/** Configurações do Restaurante Universitário (informativas). */
-export const ru = {
-  name: 'Restaurante Universitário',
-  local: 'Campus Mossoró',
-  lunch: '11:00 — 14:00',
-  dinner: '17:00 — 19:30',
-}

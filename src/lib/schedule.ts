@@ -1,12 +1,11 @@
-import { scheduleByDay } from '@/data/schedule'
 import type { ScheduleEntry, WeekDay } from '@/types'
 import { toMinutes } from '@/lib/time'
 
-const WEEKDAY_INDEX: WeekDay[] = ['seg', 'ter', 'qua', 'qui', 'sex']
+const WEEKDAY_INDEX: WeekDay[] = ['seg', 'ter', 'qua', 'qui', 'sex', 'sab', 'dom']
 
-/** Retorna o dia da semana como WeekDay (ou undefined em fins de semana). */
+/** Retorna o dia da semana como WeekDay (sábado e domingo incluídos). */
 export function todayKey(date: Date = new Date()): WeekDay | undefined {
-  return WEEKDAY_INDEX[date.getDay() - 1]
+  return WEEKDAY_INDEX[(date.getDay() + 6) % 7]
 }
 
 export function isWeekend(date: Date = new Date()): boolean {
@@ -14,10 +13,17 @@ export function isWeekend(date: Date = new Date()): boolean {
   return d === 0 || d === 6
 }
 
+/** Entradas de um dia específico, já ordenadas por horário. */
+export function entriesByDay(entries: ScheduleEntry[], day: WeekDay): ScheduleEntry[] {
+  return entries
+    .filter((entry) => entry.day === day)
+    .sort((a, b) => a.startTime.localeCompare(b.startTime))
+}
+
 /** Aulas de hoje já ordenadas. */
-export function todaysEntries(date: Date = new Date()): ScheduleEntry[] {
+export function todaysEntries(entries: ScheduleEntry[], date: Date = new Date()): ScheduleEntry[] {
   const key = todayKey(date)
-  return key ? scheduleByDay(key) : []
+  return key ? entriesByDay(entries, key) : []
 }
 
 export interface CurrentClass {

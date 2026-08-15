@@ -3,8 +3,8 @@ import { MapPin, User } from 'lucide-react'
 interface Props {
   time: string
   title: string
-  room: string
-  professor: string
+  room?: string
+  professor?: string
   duration?: string
   highlight?: 'current' | 'next' | 'none'
 }
@@ -42,9 +42,7 @@ export function ScheduleItem({ time, title, room, professor, duration, highlight
         className={`mb-3.5 min-w-0 flex-1 rounded-2xl border p-4 transition-all duration-300 ${
           isCurrent
             ? 'border-brand-200 bg-brand-50/80 dark:border-brand-500/30 dark:bg-brand-500/10'
-            : isNext
-              ? 'border-zinc-200/80 bg-white shadow-card dark:border-zinc-800 dark:bg-zinc-900'
-              : 'border-zinc-200/80 bg-white shadow-card dark:border-zinc-800 dark:bg-zinc-900'
+            : 'border-zinc-200/80 bg-white shadow-card dark:border-zinc-800 dark:bg-zinc-900'
         }`}
       >
         <div className="flex items-start justify-between gap-2">
@@ -58,19 +56,23 @@ export function ScheduleItem({ time, title, room, professor, duration, highlight
             >
               {title}
             </p>
-            <p className="mt-1 flex items-center gap-1 text-xs text-zinc-500 dark:text-zinc-400">
-              <MapPin size={13} className="shrink-0" />
-              {room}
-              {isCurrent && (
-                <span className="ml-1 inline-flex items-center rounded-full bg-brand-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-brand-600 dark:text-brand-400">
-                  agora
-                </span>
-              )}
-            </p>
-            <p className="mt-0.5 flex items-center gap-1 text-xs text-zinc-500 dark:text-zinc-400">
-              <User size={13} className="shrink-0" />
-              {professor}
-            </p>
+            {room && (
+              <p className="mt-1 flex items-center gap-1 text-xs text-zinc-500 dark:text-zinc-400">
+                <MapPin size={13} className="shrink-0" />
+                {room}
+                {isCurrent && (
+                  <span className="ml-1 inline-flex items-center rounded-full bg-brand-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-brand-600 dark:text-brand-400">
+                    agora
+                  </span>
+                )}
+              </p>
+            )}
+            {professor && (
+              <p className="mt-0.5 flex items-center gap-1 text-xs text-zinc-500 dark:text-zinc-400">
+                <User size={13} className="shrink-0" />
+                {professor}
+              </p>
+            )}
           </div>
           {duration && (
             <span className="shrink-0 rounded-full bg-zinc-100 px-2.5 py-1 text-[10px] font-medium text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">

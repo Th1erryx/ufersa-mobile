@@ -4,6 +4,13 @@ dist-ssr
 *.local
 *.tsbuildinfo
 
+# Android / Capacitor
+android/.gradle
+android/local.properties
+android/app/build
+android/.idea
+android/captures
+
 # Editor
 .vscode/*
 !.vscode/extensions.json

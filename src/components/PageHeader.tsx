@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Settings } from 'lucide-react'
+import { QrCode, Settings } from 'lucide-react'
 import { Pressable } from './Pressable'
 
 interface Props {
@@ -7,20 +7,29 @@ interface Props {
   subtitle?: string
   onSettings?: () => void
   right?: ReactNode
+  /** Exibe o logo da marca (carteira digital) ao lado do título. */
+  brand?: boolean
 }
 
 /** Cabeçalho padrão das telas, com atalho para configurações. */
-export function PageHeader({ title, subtitle, onSettings, right }: Props) {
+export function PageHeader({ title, subtitle, onSettings, right, brand }: Props) {
   return (
     <header className="sticky top-0 z-20 -mx-4 bg-zinc-50/85 px-4 pt-5 pb-3 backdrop-blur-md dark:bg-zinc-950/80">
       <div className="flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
-            {title}
-          </h1>
-          {subtitle && (
-            <p className="mt-0.5 text-sm text-zinc-500 dark:text-zinc-400">{subtitle}</p>
+        <div className="flex min-w-0 items-center gap-2.5">
+          {brand && (
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-brand-500 text-white shadow-card">
+              <QrCode size={17} strokeWidth={2.2} />
+            </span>
           )}
+          <div className="min-w-0">
+            <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+              {title}
+            </h1>
+            {subtitle && (
+              <p className="mt-0.5 text-sm text-zinc-500 dark:text-zinc-400">{subtitle}</p>
+            )}
+          </div>
         </div>
         <div className="flex shrink-0 items-center gap-2">
           {right}
