@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { CalendarClock, MapPin, Sparkles, Trash2, X } from 'lucide-react'
+import { BookOpen, CalendarClock, FileCheck2, MapPin, Sparkles, Trash2, X } from 'lucide-react'
 import type { ScheduleEntry } from '@/types'
 import { dayNames } from '@/data/schedule'
 import { formatDuration } from '@/lib/time'
 import { useSchedule } from '@/context/ScheduleContext'
+import { useModalFocus } from '@/hooks/useModalFocus'
 import { Pressable } from './Pressable'
 
 interface Props {
@@ -11,10 +12,15 @@ interface Props {
   onClose: () => void
 }
 
-/** Detalhes de um evento avulso, com opção de exclusão. */
+const isExam = (entry: ScheduleEntry) => entry.kind === 'exam'
+
+/** Detalhes de um evento avulso ou prova, com opção de exclusão. */
 export function EventDetailModal({ entry, onClose }: Props) {
-  const { removeEntry } = useSchedule()
+  const { removeEntry, subjects } = useSchedule()
+  const focusRef = useModalFocus(true, onClose)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const exam = isExam(entry)
+  const subject = entry.subjectId ? subjects.find((s) => s.id === entry.subjectId) : undefined
 
   const handleDelete = () => {
     if (!confirmDelete) {
@@ -25,13 +31,16 @@ export function EventDetailModal({ entry, onClose }: Props) {
     onClose()
   }
 
+  const tone = exam ? 'rose' : 'violet'
+
   return (
     <div
+      ref={focusRef}
       className="fixed inset-0 z-40 flex items-end justify-center bg-zinc-950/40 p-0 backdrop-blur-sm sm:items-center sm:p-4"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
-      aria-label={`Evento ${entry.title}`}
+      aria-labelledby="event-detail-title"
     >
       <div
         onClick={(e) => e.stopPropagation()}
@@ -43,15 +52,30 @@ export function EventDetailModal({ entry, onClose }: Props) {
         />
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-start gap-3">
-            <span className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-violet-500/10 text-violet-600 dark:bg-violet-500/15 dark:text-violet-300">
-              <Sparkles size={17} strokeWidth={2} />
+            <span
+              className={`mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-xl ${
+                tone === 'rose'
+                  ? 'bg-rose-500/10 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300'
+                  : 'bg-violet-500/10 text-violet-600 dark:bg-violet-500/15 dark:text-violet-300'
+              }`}
+            >
+              {exam ? <FileCheck2 size={17} strokeWidth={2} /> : <Sparkles size={17} strokeWidth={2} />}
             </span>
             <div>
-              <h2 className="text-lg font-bold leading-snug text-zinc-900 dark:text-zinc-50">
-                {entry.title}
+              <h2
+                id="event-detail-title"
+                className="text-lg font-bold leading-snug text-zinc-900 dark:text-zinc-50"
+              >
+                {subject?.name ?? entry.title}
               </h2>
-              <span className="mt-1.5 inline-block rounded-full bg-violet-500/10 px-2 py-0.5 text-[11px] font-semibold text-violet-700 dark:bg-violet-500/15 dark:text-violet-300">
-                Evento
+              <span
+                className={`mt-1.5 inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                  tone === 'rose'
+                    ? 'bg-rose-500/10 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300'
+                    : 'bg-violet-500/10 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300'
+                }`}
+              >
+                {exam ? 'Prova' : 'Evento'}
               </span>
             </div>
           </div>
@@ -65,6 +89,21 @@ export function EventDetailModal({ entry, onClose }: Props) {
         </div>
 
         <dl className="mt-5 space-y-3">
+          {subject && (
+            <div className="flex items-center gap-3">
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
+                <BookOpen size={17} strokeWidth={1.9} />
+              </span>
+              <div className="min-w-0">
+                <dt className="text-[11px] font-medium uppercase tracking-wide text-zinc-400 dark:text-zinc-500">
+                  Disciplina
+                </dt>
+                <dd className="truncate text-sm font-medium text-zinc-800 dark:text-zinc-200">
+                  {subject.name} · {subject.code}
+                </dd>
+              </div>
+            </div>
+          )}
           <div className="flex items-center gap-3">
             <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
               <CalendarClock size={17} strokeWidth={1.9} />
@@ -106,7 +145,7 @@ export function EventDetailModal({ entry, onClose }: Props) {
           }`}
         >
           <Trash2 size={15} strokeWidth={2} />
-          {confirmDelete ? 'Tem certeza? Toque para excluir' : 'Excluir evento'}
+          {confirmDelete ? 'Tem certeza? Toque para excluir' : exam ? 'Excluir prova' : 'Excluir evento'}
         </button>
       </div>
     </div>

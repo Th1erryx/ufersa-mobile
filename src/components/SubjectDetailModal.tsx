@@ -16,6 +16,7 @@ import { dayNames, days, dayLabels } from '@/data/schedule'
 import { formatDuration } from '@/lib/time'
 import { toneFor } from '@/lib/subjectTone'
 import { useSchedule } from '@/context/ScheduleContext'
+import { useModalFocus } from '@/hooks/useModalFocus'
 import { Pressable } from './Pressable'
 import { SubjectFormModal } from './SubjectFormModal'
 import { MaterialsSection } from './MaterialsSection'
@@ -28,6 +29,7 @@ interface Props {
 /** Modal de detalhes de uma disciplina, com edição de dados e horários. */
 export function SubjectDetailModal({ subject, onClose }: Props) {
   const { entries, addEntry, removeEntry, removeSubject } = useSchedule()
+  const focusRef = useModalFocus(true, onClose)
   const [editing, setEditing] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [adding, setAdding] = useState(false)
@@ -64,11 +66,12 @@ export function SubjectDetailModal({ subject, onClose }: Props) {
 
   return (
     <div
+      ref={focusRef}
       className="fixed inset-0 z-40 flex items-end justify-center bg-zinc-950/40 p-0 backdrop-blur-sm sm:items-center sm:p-4"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
-      aria-label={`Detalhes de ${subject.name}`}
+      aria-labelledby="subject-detail-title"
     >
       <div
         onClick={(e) => e.stopPropagation()}
@@ -83,7 +86,10 @@ export function SubjectDetailModal({ subject, onClose }: Props) {
           <div className="flex items-start gap-3">
             <span className={`mt-1 h-2.5 w-2.5 shrink-0 rounded-full ${tone.dot}`} />
             <div>
-              <h2 className="text-lg font-bold leading-snug text-zinc-900 dark:text-zinc-50">
+              <h2
+                id="subject-detail-title"
+                className="text-lg font-bold leading-snug text-zinc-900 dark:text-zinc-50"
+              >
                 {subject.name}
               </h2>
               <span className={`mt-1.5 inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold ${tone.badge}`}>
@@ -122,9 +128,9 @@ export function SubjectDetailModal({ subject, onClose }: Props) {
 
         <div className="mt-5">
           <div className="mb-2 flex items-center justify-between">
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-500">
+            <h2 className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-500">
               Horários
-            </p>
+            </h2>
             <button
               onClick={() => setAdding((v) => !v)}
               className="flex items-center gap-1 rounded-full bg-brand-500/10 px-2.5 py-1 text-[11px] font-semibold text-brand-700 transition-colors hover:bg-brand-500/20 dark:bg-brand-500/15 dark:text-brand-300"
@@ -236,7 +242,10 @@ function DetailRow({
 }) {
   return (
     <div className="flex items-center gap-3">
-      <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
+      <span
+        aria-hidden="true"
+        className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400"
+      >
         <Icon size={17} strokeWidth={1.9} />
       </span>
       <div className="min-w-0">

@@ -6,6 +6,8 @@ interface ProfileOverrides {
   ra?: string
   course?: string
   period?: string
+  /** Foto de perfil como data URL (base64). */
+  photo?: string
 }
 
 /** Perfil do estudante, com possibilidade de edição local. */

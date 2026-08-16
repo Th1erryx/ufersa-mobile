@@ -1,4 +1,4 @@
-/** Utilitários de horário (strings "HH:mm"). */
+/** Utilitários de horário (strings "HH:mm") e datas. */
 
 export function toMinutes(time: string): number {
   const [h, m] = time.split(':').map(Number)
@@ -27,4 +27,16 @@ export function formatDuration(start: string, end: string): string {
   if (h === 0) return `${m} min`
   if (rem === 0) return `${h}h`
   return `${h}h${String(rem).padStart(2, '0')}min`
+}
+
+/** Quantidade de dias (inteiro) até a próxima ocorrência de `day`. */
+export function daysUntil(day: number, now: Date = new Date()): number {
+  return (day - now.getDay() + 7) % 7
+}
+
+/** Formata uma contagem regressiva em dias (0 = hoje). */
+export function formatDaysCountdown(days: number): string {
+  if (days <= 0) return 'hoje'
+  if (days === 1) return 'amanhã'
+  return `em ${days} dias`
 }

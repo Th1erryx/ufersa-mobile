@@ -28,6 +28,8 @@ export interface ScheduleEntry {
   title?: string
   /** Local opcional usado em eventos avulsos. */
   location?: string
+  /** Marca o evento como avaliação/prova para destaque visual. */
+  kind?: 'exam'
   startTime: string
   endTime: string
 }
@@ -36,11 +38,14 @@ export interface QuickLink {
   id: string
   label: string
   url: string
-  /** Caminho local (public/) do favicon do site. */
-  favicon: string
+  /** Caminho local (public/) do favicon do site. Ausente em links criados
+   *  pelo usuário, que usam um ícone genérico. */
+  favicon?: string
 }
 
 export type ThemePreference = 'light' | 'dark' | 'system'
+
+export type MaterialCategory = 'exercise' | 'slides' | 'exam' | 'book' | 'notes' | 'other'
 
 export interface Material {
   id: string
@@ -54,4 +59,10 @@ export interface Material {
   size: number
   /** Timestamp de criação em ms. */
   createdAt: number
+  /** Categoria semântica do material (lista, slides, prova…). */
+  category: MaterialCategory
+  /** Nome de exibição personalizado (opcional). */
+  title?: string
+  /** Fixado no topo da lista. */
+  pinned?: boolean
 }

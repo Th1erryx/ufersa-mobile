@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { BookPlus, X } from 'lucide-react'
 import { Pressable } from '@/components/Pressable'
 import { useSchedule } from '@/context/ScheduleContext'
+import { useModalFocus } from '@/hooks/useModalFocus'
 import { days, dayLabels, dayNames } from '@/data/schedule'
 import type { WeekDay } from '@/types'
 
@@ -14,6 +15,7 @@ interface Props {
  *  incluindo sábado e domingo. */
 export function ClassFormModal({ initialDay, onClose }: Props) {
   const { subjects, addEntry } = useSchedule()
+  const focusRef = useModalFocus(true, onClose)
   const [subjectId, setSubjectId] = useState(subjects[0]?.id ?? '')
   const [day, setDay] = useState<WeekDay>(initialDay ?? 'sab')
   const [startTime, setStartTime] = useState('08:00')
@@ -29,11 +31,12 @@ export function ClassFormModal({ initialDay, onClose }: Props) {
 
   return (
     <div
+      ref={focusRef}
       className="fixed inset-0 z-40 flex items-end justify-center bg-zinc-950/40 p-0 backdrop-blur-sm sm:items-center sm:p-4"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
-      aria-label="Adicionar aula"
+      aria-labelledby="class-form-title"
     >
       <div
         onClick={(e) => e.stopPropagation()}
@@ -44,7 +47,10 @@ export function ClassFormModal({ initialDay, onClose }: Props) {
           className="mx-auto mb-4 block h-1 w-10 rounded-full bg-zinc-200 dark:bg-zinc-700 sm:hidden"
         />
         <div className="flex items-start justify-between gap-4">
-          <h2 className="text-lg font-bold leading-snug text-zinc-900 dark:text-zinc-50">
+          <h2
+            id="class-form-title"
+            className="text-lg font-bold leading-snug text-zinc-900 dark:text-zinc-50"
+          >
             Adicionar aula
           </h2>
           <Pressable

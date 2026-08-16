@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Plus, X } from 'lucide-react'
 import { Pressable } from '@/components/Pressable'
 import { useSchedule } from '@/context/ScheduleContext'
+import { useModalFocus } from '@/hooks/useModalFocus'
 import { SUBJECT_TONES } from '@/lib/subjectTone'
 import type { Subject } from '@/types'
 
@@ -13,6 +14,7 @@ interface Props {
 /** Formulário de criação/edição de disciplina. */
 export function SubjectFormModal({ initial, onClose }: Props) {
   const { addSubject, updateSubject } = useSchedule()
+  const focusRef = useModalFocus(true, onClose)
   const [name, setName] = useState(initial?.name ?? '')
   const [code, setCode] = useState(initial?.code ?? '')
   const [professor, setProfessor] = useState(initial?.professor ?? '')
@@ -41,11 +43,12 @@ export function SubjectFormModal({ initial, onClose }: Props) {
 
   return (
     <div
+      ref={focusRef}
       className="fixed inset-0 z-40 flex items-end justify-center bg-zinc-950/40 p-0 backdrop-blur-sm sm:items-center sm:p-4"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
-      aria-label={initial ? `Editar ${initial.name}` : 'Nova disciplina'}
+      aria-labelledby="subject-form-title"
     >
       <div
         onClick={(e) => e.stopPropagation()}
@@ -56,7 +59,10 @@ export function SubjectFormModal({ initial, onClose }: Props) {
           className="mx-auto mb-4 block h-1 w-10 rounded-full bg-zinc-200 dark:bg-zinc-700 sm:hidden"
         />
         <div className="flex items-start justify-between gap-4">
-          <h2 className="text-lg font-bold leading-snug text-zinc-900 dark:text-zinc-50">
+          <h2
+            id="subject-form-title"
+            className="text-lg font-bold leading-snug text-zinc-900 dark:text-zinc-50"
+          >
             {initial ? 'Editar disciplina' : 'Nova disciplina'}
           </h2>
           <Pressable

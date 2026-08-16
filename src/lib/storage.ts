@@ -2,6 +2,7 @@
 
 const OLD_PREFIX = 'ufersa-pocket:'
 const PREFIX = 'ufersa-mobile:'
+const STORAGE_EVENT = 'ufersa-mobile:storage'
 
 let migrated = false
 
@@ -39,9 +40,23 @@ export function loadJson<T>(key: string, fallback: T): T {
   }
 }
 
+/** Dispara um evento de janela avisando que uma chave mudou, para que outras
+ *  instâncias de useLocalStorage da mesma chave possam se sincronizar. */
+function notifyKey(key: string): void {
+  try {
+    window.dispatchEvent(new CustomEvent(STORAGE_EVENT, { detail: key }))
+  } catch {
+    /* evento indisponível */
+  }
+}
+
 export function saveJson<T>(key: string, value: T): void {
   try {
-    localStorage.setItem(PREFIX + key, JSON.stringify(value))
+    const raw = JSON.stringify(value)
+    const existing = localStorage.getItem(PREFIX + key)
+    if (existing === raw) return
+    localStorage.setItem(PREFIX + key, raw)
+    notifyKey(key)
   } catch {
     /* armazenamento indisponível */
   }
@@ -57,8 +72,13 @@ export function loadString(key: string, fallback: string): string {
 
 export function saveString(key: string, value: string): void {
   try {
+    const existing = localStorage.getItem(PREFIX + key)
+    if (existing === value) return
     localStorage.setItem(PREFIX + key, value)
+    notifyKey(key)
   } catch {
     /* armazenamento indisponível */
   }
 }
+
+export const STORAGE_EVENT_NAME = STORAGE_EVENT

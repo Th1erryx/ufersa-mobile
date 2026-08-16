@@ -17,6 +17,7 @@ interface ScheduleContextValue extends ScheduleData {
   updateEntry: (id: string, patch: Partial<ScheduleEntry>) => void
   removeEntry: (id: string) => void
   resetAll: () => void
+  importData: (data: ScheduleData) => void
 }
 
 const ScheduleContext = createContext<ScheduleContextValue | null>(null)
@@ -87,6 +88,13 @@ export function ScheduleProvider({ children }: { children: ReactNode }) {
     [setData],
   )
 
+  const importData = useCallback(
+    (incoming: ScheduleData) => {
+      setData({ subjects: incoming.subjects ?? [], entries: incoming.entries ?? [] })
+    },
+    [setData],
+  )
+
   const value = useMemo(
     () => ({
       subjects: data.subjects,
@@ -98,8 +106,9 @@ export function ScheduleProvider({ children }: { children: ReactNode }) {
       updateEntry,
       removeEntry,
       resetAll: reset,
+      importData,
     }),
-    [data, addSubject, updateSubject, removeSubject, addEntry, updateEntry, removeEntry, reset],
+    [data, addSubject, updateSubject, removeSubject, addEntry, updateEntry, removeEntry, reset, importData],
   )
 
   return <ScheduleContext.Provider value={value}>{children}</ScheduleContext.Provider>

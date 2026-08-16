@@ -10,7 +10,7 @@ Guia de contexto do projeto. Leia sempre que for iniciar uma sessão para não s
 
 - **React 18 + TypeScript** (strict, `noUnusedLocals`)
 - **Vite 6** + `vite-plugin-pwa` (PWA com service worker, `base: './'`)
-- **Capacitor 8** — APK; `appId: br.edu.ufersa.mobile`; plugins: `@capacitor/filesystem`, `@capacitor-community/file-opener`, `@capacitor/share`
+- **Capacitor 8** — APK; `appId: br.edu.ufersa.mobile`; plugins: `@capacitor/filesystem`, `@capacitor-community/file-opener`, `@capacitor/share`, `@capacitor/local-notifications`
 - **Tailwind CSS 3** (modo dark via classe `.dark`)
 - **lucide-react** (ícones)
 - **sharp** (devDependency) — usado para rasterizar o logo SVG → PNG
@@ -62,7 +62,7 @@ android/                 # projeto Android (gradle), configurado pelo Capacitor
 ## Convenções
 
 - **Idioma do código**: nomes/types/mensagens em inglês; textos de UI em pt-BR.
-- **Persistência**: tudo passa por `src/lib/storage.ts` (prefixo `ufersa-mobile:`) ou `useLocalStorage`. Falham silenciosamente. Chaves antigas `ufersa-pocket:` são migradas automaticamente; o `index.html` lê os dois prefixos para o tema.
+- **Persistência**: tudo passa por `src/lib/storage.ts` (prefixo `ufersa-mobile:`) ou `useLocalStorage`. Falham silenciosamente. Chaves antigas `ufersa-pocket:` são migradas automaticamente; o `index.html` lê os dois prefixos para o tema. **Sincronização**: `saveJson`/`saveString` disparam um evento `ufersa-mobile:storage` na janela; `useLocalStorage` escuta esse evento para instâncias da mesma chave se atualizarem (ex.: Configurações → telas montadas). Não usar outra forma de comunicação cross-component para a mesma chave.
 - **Alias** `@/` → `src/`.
 - **Estilo**: Tailwind, classes utilitárias, tema dark com prefixo `dark:`.
 - **Sem comentários** salvo docstrings curtas explicando propósito.
@@ -88,11 +88,18 @@ Estas escolhas foram deliberadas — respeite-as e **não as reverta sem antes c
 
 - **QR do RU**: mock por padrão (`src/data/qrCode.ts`, `USER_QR_CODE = ''`); o usuário define o próprio QR nas Configurações (upload de imagem → data URL no localStorage `qrCode`).
 - **Campus configurável**: `src/data/campuses.ts` (Mossoró, Angicos, Caraúbas, Pau dos Ferros — padrão Pau dos Ferros) + `useCampus` (localStorage `campus`); refletido na tela do RU.
-- **Grade editável** via modais (disciplinas + eventos avulsos) em `ScheduleContext`.
-- **Materiais por disciplina**: importar/abrir/compartilhar/excluir (PDF, Word, slides, imagens…). Binário no disco do app (Capacitor `Directory.Data/materials/{id}`) ou IndexedDB `ufersa-mobile-files` (migra de `ufersa-pocket-files`).
+- **Grade editável** via modais (disciplinas + eventos avulsos + **provas**) em `ScheduleContext`. Provas (`ScheduleEntry.kind === 'exam'`) têm destaque visual (rosa), modal próprio (`EventDetailModal`), filtram no `WeeklyGrid` e entram na contagem regressiva da Home (`src/lib/schedule.ts` → `upcomingExams`).
+- **Materiais por disciplina**: importar em lote (vários arquivos de uma vez), renomear, classificar por categoria (lista de exercícios, slides, prova, livro, anotações, outros), buscar, filtrar, **fixar (pin)** no topo e **reordenar manualmente** (mover acima/abaixo — só dentro da mesma disciplina), abrir, compartilhar e excluir (PDF, Word, slides, imagens…). Binário no disco do app (Capacitor `Directory.Data/materials/{id}`) ou IndexedDB `ufersa-mobile-files` (migra de `ufersa-pocket-files`).
+- **Notificações locais** (`src/lib/notifications.ts`): aulas, provas e aberturas do RU agendadas no dispositivo via `@capacitor/local-notifications` (importado dinamicamente, no APK/Android). No navegador/PWA usa a **Web Notifications API** (agenda com `setTimeout` até a próxima ocorrência, reagenda após disparar) — limitação: no web só disparam com o app aberto. Toggles em Configurações (localStorage `notifications`), sincronizadas por `useNotificationSync` quando a grade/campus/preferências mudam. A permissão é solicitada na abertura do app **e** ao habilitar um toggle. **Não funciona no iOS**: o projeto não tem a plataforma `ios/` (precisa `npm i @capacitor/ios` + `npx cap add ios` + Xcode), e o Safari iOS não expõe a Web Notifications API.
+- **Backup/restore** (`src/lib/backup.ts`): exporta um JSON único com grade, perfil, QR, campus, tema, notificações, **links personalizados** e materiais (incluindo binários base64). Restaura tudo de volta (inclui `importData` no `ScheduleContext`, `importMaterials` no `MaterialsContext` e `applyLinks` para `useCustomLinks`).
+- **Links úteis personalizados**: além dos atalhos oficiais, o usuário pode adicionar/remover links próprios na Home (`useCustomLinks`, localStorage `quickLinks`; modal `QuickLinkModal`). Entram no backup/restore.
+- **Apagar todos os dados**: em Configurações → Dados, botão de exclusão total com dupla confirmação (grade, perfil, QR, links, notificações, tema, campus e materiais incluindo binários via `clearMaterials` no `MaterialsContext`).
+- **Cartão de perfil**: seção "Perfil" no topo das Configurações com nome, curso, período e RA do estudante (gradiente brand). **Editável no próprio cartão**: botão de lápis expande os campos (nome, curso, período, RA) com Salvar/Padrão; a foto é trocada clicando nela — sem foto abre o seletor direto, com foto abre um **visualizador em tela cheia estilo WhatsApp** (foto ampliada + botões "Alterar foto" e "Remover"). Removida a antiga seção duplicada "Editar informações pessoais" em Configurações → Dados.
+- **Aulas concluídas na Home**: itens do dia que já terminaram esmaecem (opacidade + texto riscado) via `ScheduleItem done`.
+- **Performance**: countdown do card em destaque isolado em `CountdownChip` (memo auto-tick a cada 60s) para não re-pintar o LCP; seções longas (Configurações) usam `.section-virtualize` (`content-visibility: auto`).
 - **Links úteis na Home**: SIGAA, Portal do Discente e Site da UFERSA, com favicons locais em `public/favicons/`.
 - **Identidade visual**: logo QR+capelo (fonte `design/logo.svg`) em favicon, PWA e launcher Android (legado + adaptive icon + splash verde `#1d6a43`).
-- Perfil, tema light/dark/system e notificações (visual) nas Configurações.
+- Perfil, tema light/dark/system e notificações (reais no APK, Web Notifications no navegador) nas Configurações.
 - PWA configurada (manifest + service worker no build). **Sem deploy feito** — PWA ainda não hospedada.
 
 ## Roadmap
@@ -100,6 +107,8 @@ Estas escolhas foram deliberadas — respeite-as e **não as reverta sem antes c
 - ~~Empacotar como APK~~ via Capacitor — **feito** (`br.edu.ufersa.mobile`).
 - ~~Upload de materiais~~ por disciplina — **feito** (armazenamento local, offline).
 - ~~Campus configurável~~ e ~~QR editável~~ — **feito**.
+- ~~Notificações locais~~ (aulas, provas, RU) — **feito**.
+- ~~Backup/restore dos dados~~ (JSON único) — **feito**.
 - Próximos passos possíveis: distribuição de materiais via backend, notificações push, sincronização com serviços oficiais da UFERSA.
 
 ## Regenerando ícones (se mudar o logo)
@@ -110,3 +119,12 @@ node -e "const sharp=require('sharp'); const s='design/logo.svg'; (async()=>{for
 ```
 
 Os mipmaps do Android (`ic_launcher*`, `splash*`) e o foreground do adaptive icon são derivados do mesmo SVG (ver `render-android` histórico); se o logo mudar, regenerar com sharp e `npx cap sync android`.
+
+## Segurança (npm audit)
+
+`npm audit` hoje reporta **3 vulnerabilidades moderadas**, todas em `uuid` via `xcode` → `@capacitor/cli`. São **só tooling de build** (rodei na máquina, não vão pro bundle web nem pro APK) — **não corrigir** com `npm audit fix --force`, pois rebaixaria `@capacitor/cli` 8.5.0 → 8.4.2 (breaking) sem ganho real. Reavaliar quando houver um 8.5.x/9.x estável com o fix.
+
+Superfície real de segurança do app (offline, sem backend):
+- **QR do RU fica em texto plano no `localStorage`** (`ufersa-mobile:qrCode`) — qualquer JS injetado no webview lê. Único dado sensível.
+- Favicons/links úteis são estáticos (`public/favicons/`) — sem runtime.
+- Não há rede, credenciais nem conteúdo dinâmico no app.

@@ -1,5 +1,5 @@
 import type { ScheduleEntry, WeekDay } from '@/types'
-import { toMinutes } from '@/lib/time'
+import { toMinutes, daysUntil } from '@/lib/time'
 
 const WEEKDAY_INDEX: WeekDay[] = ['seg', 'ter', 'qua', 'qui', 'sex', 'sab', 'dom']
 
@@ -66,4 +66,27 @@ export function formatWeekday(date: Date = new Date()): string {
     month: 'long',
   })
   return text.charAt(0).toUpperCase() + text.slice(1)
+}
+
+/** Próxima prova/avaliação: eventos marcados com kind 'exam', ordenados
+ *  pelo dia mais próximo (hoje = 0) e depois pelo horário. */
+export function upcomingExams(entries: ScheduleEntry[], now: Date = new Date()): ScheduleEntry[] {
+  return entries
+    .filter((e) => e.kind === 'exam')
+    .sort((a, b) => {
+      const da = nextExamDays(a, now)
+      const db = nextExamDays(b, now)
+      if (da !== db) return da - db
+      return toMinutes(a.startTime) - toMinutes(b.startTime)
+    })
+}
+
+/** Dias (0 = hoje) até a prova, considerando se o horário de hoje já passou
+ *  (aí passa a contar como 7, ou seja, a partir da próxima semana). */
+export function nextExamDays(entry: ScheduleEntry, now: Date = new Date()): number {
+  const nowMin = now.getHours() * 60 + now.getMinutes()
+  const weekday = (WEEKDAY_INDEX.indexOf(entry.day) + 1) % 7
+  const days = daysUntil(weekday, now)
+  if (days === 0 && toMinutes(entry.startTime) <= nowMin) return 7
+  return days
 }
