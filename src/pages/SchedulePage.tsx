@@ -8,10 +8,11 @@ import { EventDetailModal } from '@/components/EventDetailModal'
 import { EventFormModal } from '@/components/EventFormModal'
 import { ClassFormModal } from '@/components/ClassFormModal'
 import { days, dayLabels } from '@/data/schedule'
-import { entriesByDay, todayKey } from '@/lib/schedule'
-import { formatDuration } from '@/lib/time'
+import { entriesByDay, todayKey, datedExams, nextExamDays } from '@/lib/schedule'
+import { formatDuration, formatDaysCountdown } from '@/lib/time'
 import { toneFor } from '@/lib/subjectTone'
 import { useSchedule } from '@/context/ScheduleContext'
+import { useNow } from '@/hooks/useNow'
 import type { ScheduleEntry, Subject, WeekDay } from '@/types'
 
 interface Props {
@@ -30,6 +31,9 @@ export function SchedulePage({ onOpenSettings }: Props) {
 
   const subjectById = (id?: string) => (id ? subjects.find((s) => s.id === id) : undefined)
   const dayEntries = entriesByDay(entries, activeDay)
+
+  const now = useNow()
+  const dated = datedExams(entries).filter((e) => nextExamDays(e, now) !== null)
 
   return (
     <div className="flex h-full flex-col px-4 md:px-6 lg:px-8">
@@ -93,6 +97,48 @@ export function SchedulePage({ onOpenSettings }: Props) {
               )
             })}
           </div>
+
+{dated.length > 0 && (
+            <section className="mb-4">
+              <h2 className="mb-2 px-1 text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-500">
+                Provas agendadas
+              </h2>
+              <div className="space-y-2">
+                {dated.map((entry) => {
+                  const subject = entry.subjectId ? subjectById(entry.subjectId) : undefined
+                  const label = subject?.name ?? entry.title ?? 'Prova'
+                  const days = nextExamDays(entry, now) ?? 0
+                  return (
+                    <Pressable
+                      key={entry.id}
+                      onClick={() => setSelectedEvent(entry)}
+                      aria-label={`Ver detalhes da prova ${label}, ${entry.date}`}
+                      className="flex w-full items-center gap-3 rounded-2xl border border-rose-200 bg-rose-50/60 p-3.5 text-left transition-all duration-200 hover:-translate-y-0.5 hover:shadow-cardHover active:scale-[0.98] dark:border-rose-500/30 dark:bg-rose-500/10 md:p-4"
+                    >
+                      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-rose-500 text-white">
+                        <FileCheck2 size={18} strokeWidth={1.9} />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                          {label}
+                        </span>
+                        <span className="mt-0.5 flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400">
+                          <span className="tabular-nums">
+                            {new Date(entry.date! + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                          </span>
+                          <span className="text-zinc-300 dark:text-zinc-600">·</span>
+                          <span className="tabular-nums">{entry.startTime} — {entry.endTime}</span>
+                        </span>
+                      </span>
+                      <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-rose-700 dark:bg-zinc-800 dark:text-rose-300">
+                        {formatDaysCountdown(days)}
+                      </span>
+                    </Pressable>
+                  )
+                })}
+              </div>
+            </section>
+          )}
 
 {dayEntries.length > 0 ? (
             <div className="animate-fade-in space-y-3" key={activeDay}>

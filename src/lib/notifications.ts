@@ -6,12 +6,18 @@ export interface NotificationSettings {
   classes: boolean
   exams: boolean
   ru: boolean
+  /** Lembra 1 dia antes da prova. */
+  examEve: boolean
+  /** Horário (HH:mm) do lembrete de véspera. */
+  examEveTime: string
 }
 
 export const DEFAULT_NOTIFICATIONS: NotificationSettings = {
   classes: true,
   exams: true,
   ru: true,
+  examEve: true,
+  examEveTime: '18:00',
 }
 
 const WEEKDAY: Record<string, number> = { seg: 2, ter: 3, qua: 4, qui: 5, sex: 6, sab: 7, dom: 1 }
@@ -30,7 +36,15 @@ interface ScheduledNotification {
   title: string
   body: string
   schedule: {
-    on: { weekday?: number; hour: number; minute: number }
+    on: {
+      weekday?: number
+      /** Ano/até dia para notificações pontuais (uma única vez). */
+      year?: number
+      month?: number
+      day?: number
+      hour: number
+      minute: number
+    }
     repeats: boolean
   }
 }
@@ -42,12 +56,24 @@ function webSupported(): boolean {
 /** Timers do agendamento web, para cancelar ao reagendar. */
 let webTimers: ReturnType<typeof setTimeout>[] = []
 
-/** Próximo timestamp (ms) em que um agendamento "on weekday/hora/minuto"
- *  deve disparar, a partir de agora. */
-function nextOccurrence(on: { weekday?: number; hour: number; minute: number }): number {
+/** Próximo timestamp (ms) em que um agendamento deve disparar, a partir de
+ *  agora. Suporta agendamentos pontuais (year/month/day) e recorrentes
+ *  (weekday) ou diários (só hora/minuto). */
+function nextOccurrence(on: {
+  weekday?: number
+  year?: number
+  month?: number
+  day?: number
+  hour: number
+  minute: number
+}): number {
   const now = new Date()
   const target = new Date(now)
   target.setHours(on.hour, on.minute, 0, 0)
+  if (on.year !== undefined && on.month !== undefined && on.day !== undefined) {
+    target.setFullYear(on.year, on.month - 1, on.day)
+    return target.getTime()
+  }
   let diff = target.getTime() - now.getTime()
   if (on.weekday !== undefined) {
     let days = on.weekday - (now.getDay() === 0 ? 7 : now.getDay())
@@ -148,14 +174,41 @@ function buildItems({
     const hour = Math.floor(lead / 60)
     const minute = lead % 60
 
+    const examOn = (): { year?: number; month?: number; day?: number } => {
+      if (!entry.date) return {}
+      const [y, m, d] = entry.date.split('-').map(Number)
+      return { year: y, month: m, day: d }
+    }
+
     if (entry.kind === 'exam') {
       if (!settings.exams) continue
+      if (entry.date && entry.date < new Date().toISOString().slice(0, 10)) continue
+      const onBase = entry.date ? examOn() : { weekday }
       notifications.push({
         id: idFor(),
         title: 'Prova hoje 📝',
         body: `${name} começa às ${entry.startTime}.`,
-        schedule: { on: { weekday, hour, minute }, repeats: true },
+        schedule: { on: { ...onBase, hour, minute }, repeats: !entry.date },
       })
+      if (settings.examEve) {
+        const [eh, em] = settings.examEveTime.split(':').map(Number)
+        const eveOn: { weekday?: number; year?: number; month?: number; day?: number } = {}
+        if (entry.date) {
+          const d = new Date(Number(examOn().year), Number(examOn().month) - 1, Number(examOn().day))
+          d.setDate(d.getDate() - 1)
+          eveOn.year = d.getFullYear()
+          eveOn.month = d.getMonth() + 1
+          eveOn.day = d.getDate()
+        } else {
+          eveOn.weekday = weekday === 1 ? 7 : weekday - 1
+        }
+        notifications.push({
+          id: idFor(),
+          title: 'Prova amanhã 📝',
+          body: `${name} é amanhã às ${entry.startTime}. Bom estudo!`,
+          schedule: { on: { ...eveOn, hour: eh, minute: em }, repeats: !entry.date },
+        })
+      }
     } else if (subject) {
       if (!settings.classes) continue
       notifications.push({

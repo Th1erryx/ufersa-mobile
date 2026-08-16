@@ -9,6 +9,7 @@ import {
   Pin,
   Search,
   Share2,
+  Star,
   Trash2,
 } from 'lucide-react'
 import { Pressable } from '@/components/Pressable'
@@ -23,10 +24,11 @@ interface Props {
   subjectId: string
 }
 
-type Filter = MaterialCategory | 'all'
+type Filter = MaterialCategory | 'all' | 'fav'
 
 const FILTERS: { value: Filter; label: string }[] = [
   { value: 'all', label: 'Todos' },
+  { value: 'fav', label: 'Favoritos' },
   { value: 'exercise', label: 'Listas' },
   { value: 'slides', label: 'Slides' },
   { value: 'exam', label: 'Provas' },
@@ -38,7 +40,7 @@ const FILTERS: { value: Filter; label: string }[] = [
 /** Seção de materiais de uma disciplina: importar em lote, buscar, filtrar,
  *  renomear, reclassificar, abrir, compartilhar e excluir. */
 export function MaterialsSection({ subjectId }: Props) {
-  const { materials, removeMaterial, openMaterial, shareMaterial, togglePin, moveMaterial } =
+  const { materials, removeMaterial, openMaterial, shareMaterial, togglePin, toggleFavorite, moveMaterial } =
     useMaterials()
   const inputRef = useRef<HTMLInputElement>(null)
   const [pendingFiles, setPendingFiles] = useState<File[] | null>(null)
@@ -58,13 +60,19 @@ export function MaterialsSection({ subjectId }: Props) {
 
   const visibleCategories = useMemo(() => {
     const present = new Set(all.map((m) => m.category))
-    return FILTERS.filter((f) => f.value === 'all' || present.has(f.value))
+    const hasFav = all.some((m) => m.favorite)
+    return FILTERS.filter(
+      (f) =>
+        f.value === 'all' ||
+        (f.value === 'fav' ? hasFav : present.has(f.value)),
+    )
   }, [all])
 
   const list = useMemo(() => {
     const q = query.trim().toLowerCase()
     return all.filter((m) => {
-      if (filter !== 'all' && m.category !== filter) return false
+      if (filter === 'fav' && !m.favorite) return false
+      if (filter !== 'all' && filter !== 'fav' && m.category !== filter) return false
       if (!q) return true
       return m.name.toLowerCase().includes(q) || (m.title ?? '').toLowerCase().includes(q)
     })
@@ -203,6 +211,13 @@ export function MaterialsSection({ subjectId }: Props) {
                   </span>
                 </Pressable>
                 <span className="flex shrink-0 items-center gap-1">
+                  <IconButton
+                    label={material.favorite ? `Remover dos favoritos ${material.title ?? material.name}` : `Favoritar ${material.title ?? material.name}`}
+                    onClick={() => toggleFavorite(material.id)}
+                    className={material.favorite ? 'text-amber-500 hover:bg-amber-500/10 dark:text-amber-400' : undefined}
+                  >
+                    <Star size={14} className={material.favorite ? 'fill-amber-500 dark:fill-amber-400' : ''} />
+                  </IconButton>
                   <IconButton
                     label={material.pinned ? `Desafixar ${material.title ?? material.name}` : `Fixar ${material.title ?? material.name}`}
                     onClick={() => togglePin(material.id)}

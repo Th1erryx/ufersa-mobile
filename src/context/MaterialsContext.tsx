@@ -27,6 +27,7 @@ interface MaterialsContextValue {
   openMaterial: (id: string, contentType?: string) => Promise<void>;
   shareMaterial: (id: string) => Promise<void>;
   togglePin: (id: string) => void;
+  toggleFavorite: (id: string) => void;
   moveMaterial: (id: string, direction: -1 | 1) => void;
   importMaterials: (
     items: { material: Material; base64: string | null }[],
@@ -157,6 +158,15 @@ export function MaterialsProvider({ children }: { children: ReactNode }) {
     [setMaterials],
   );
 
+  const toggleFavorite = useCallback(
+    (id: string) => {
+      setMaterials((prev) =>
+        prev.map((m) => (m.id === id ? { ...m, favorite: !m.favorite } : m)),
+      );
+    },
+    [setMaterials],
+  );
+
   const moveMaterial = useCallback(
     (id: string, direction: -1 | 1) => {
       setMaterials((prev) => {
@@ -229,7 +239,8 @@ export function MaterialsProvider({ children }: { children: ReactNode }) {
       removeMaterial,
       openMaterial,
       shareMaterial,
-      togglePin,
+togglePin,
+      toggleFavorite,
       moveMaterial,
       importMaterials,
       clearMaterials,
@@ -242,6 +253,7 @@ export function MaterialsProvider({ children }: { children: ReactNode }) {
       openMaterial,
       shareMaterial,
       togglePin,
+      toggleFavorite,
       moveMaterial,
       importMaterials,
       clearMaterials,

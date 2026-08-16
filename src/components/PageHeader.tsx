@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { QrCode, Settings } from 'lucide-react'
+import { Settings } from 'lucide-react'
 import { Pressable } from './Pressable'
 
 interface Props {
@@ -18,12 +18,12 @@ export function PageHeader({ title, subtitle, onSettings, right, brand }: Props)
       <div className="flex items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2.5">
           {brand && (
-            <span
+            <img
+              src="/icons/icon-192.png"
+              alt=""
               aria-hidden="true"
-              className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-brand-500 text-white shadow-card md:h-11 md:w-11"
-            >
-              <QrCode size={17} strokeWidth={2.2} className="md:h-6 md:w-6" />
-            </span>
+              className="h-9 w-9 shrink-0 rounded-xl object-contain md:h-11 md:w-11"
+            />
           )}
           <div className="min-w-0">
             <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 md:text-3xl">

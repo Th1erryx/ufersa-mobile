@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react'
-import { CalendarDays, ExternalLink, FileCheck2, Link2, PartyPopper, Plus, QrCode, X } from 'lucide-react'
+import { CalendarDays, ExternalLink, FileCheck2, FolderOpen, Link2, PartyPopper, Plus, QrCode, X } from 'lucide-react'
 import { Pressable } from '@/components/Pressable'
 import { PageHeader } from '@/components/PageHeader'
 import { ScheduleItem } from '@/components/ScheduleItem'
 import { EmptyState } from '@/components/EmptyState'
 import { QuickLinkModal } from '@/components/QuickLinkModal'
 import { CountdownChip } from '@/components/CountdownChip'
+import { GlobalMaterialsModal } from '@/components/GlobalMaterialsModal'
 import { quickLinks } from '@/data/quickLinks'
 import { todaysEntries, classStatus, formatWeekday, isWeekend, upcomingExams, nextExamDays } from '@/lib/schedule'
 import { toMinutes, formatDuration, formatDaysCountdown } from '@/lib/time'
@@ -26,11 +27,12 @@ export function HomePage({ onNavigate, onOpenSettings }: Props) {
   const { subjects, entries } = useSchedule()
   const { links: customLinks, addLink, removeLink } = useCustomLinks()
   const [addingLink, setAddingLink] = useState(false)
+  const [materialsOpen, setMaterialsOpen] = useState(false)
   const now = useNow()
   const todays = todaysEntries(entries, now)
   const { current, next } = useMemo(() => classStatus(todays, now), [todays, now])
   const exams = useMemo(
-    () => upcomingExams(entries, now).filter((e) => nextExamDays(e, now) < 7).slice(0, 3),
+    () => upcomingExams(entries, now).filter((e) => (nextExamDays(e, now) ?? Infinity) < 7).slice(0, 3),
     [entries, now],
   )
 
@@ -164,7 +166,7 @@ export function HomePage({ onNavigate, onOpenSettings }: Props) {
               {exams.map((entry, index) => {
                 const subject = entry.subjectId ? subjectById(entry.subjectId) : undefined
                 const name = subject?.name ?? entry.title ?? 'Prova'
-                const days = nextExamDays(entry, now)
+                const days = nextExamDays(entry, now) ?? 0
                 const isToday = days === 0
                 const isFirst = index === 0
                 return (
@@ -240,6 +242,18 @@ export function HomePage({ onNavigate, onOpenSettings }: Props) {
               </span>
               <p className="mt-3 text-sm font-semibold text-zinc-900 dark:text-zinc-100">Minha grade</p>
               <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">Ver horários</p>
+            </Pressable>
+
+            <Pressable
+              onClick={() => setMaterialsOpen(true)}
+              aria-label="Ver todos os materiais"
+              className="group rounded-3xl border border-zinc-200/80 bg-white p-4 text-left shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-cardHover active:scale-[0.97] dark:border-zinc-800 dark:bg-zinc-900 md:p-5"
+            >
+              <span className="grid h-11 w-11 place-items-center rounded-2xl bg-amber-500/10 text-amber-600 transition-transform duration-200 group-hover:scale-110 dark:text-amber-400 md:h-12 md:w-12">
+                <FolderOpen size={22} strokeWidth={1.9} />
+              </span>
+              <p className="mt-3 text-sm font-semibold text-zinc-900 dark:text-zinc-100">Materiais</p>
+              <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">Buscar em todos</p>
             </Pressable>
           </div>
         </section>
@@ -370,6 +384,8 @@ export function HomePage({ onNavigate, onOpenSettings }: Props) {
           )}
         </section>
       </div>
+
+      {materialsOpen && <GlobalMaterialsModal onClose={() => setMaterialsOpen(false)} />}
     </div>
   )
 }

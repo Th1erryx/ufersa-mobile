@@ -32,6 +32,9 @@ export function EventDetailModal({ entry, onClose }: Props) {
   }
 
   const tone = exam ? 'rose' : 'violet'
+  const whenLabel = entry.date
+    ? `${new Date(entry.date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })} · ${dayNames[entry.day]} · ${entry.startTime} — ${entry.endTime}`
+    : `${dayNames[entry.day]} · ${entry.startTime} — ${entry.endTime}`
 
   return (
     <div
@@ -113,7 +116,7 @@ export function EventDetailModal({ entry, onClose }: Props) {
                 Quando
               </dt>
               <dd className="truncate text-sm font-medium text-zinc-800 dark:text-zinc-200">
-                {dayNames[entry.day]} · {entry.startTime} — {entry.endTime}
+                {whenLabel}
                 {'  ·  '}
                 {formatDuration(entry.startTime, entry.endTime)}
               </dd>

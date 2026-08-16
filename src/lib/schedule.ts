@@ -8,15 +8,34 @@ export function todayKey(date: Date = new Date()): WeekDay | undefined {
   return WEEKDAY_INDEX[(date.getDay() + 6) % 7]
 }
 
+/** Converte uma data "AAAA-MM-DD" em Date no horário local (meia-noite). */
+function parseDate(date: string): Date {
+  const [y, m, d] = date.split('-').map(Number)
+  return new Date(y, m - 1, d)
+}
+
+/** Dia da semana (WeekDay) de uma data "AAAA-MM-DD". */
+export function dateToWeekDay(date: string): WeekDay {
+  return WEEKDAY_INDEX[(parseDate(date).getDay() + 6) % 7]
+}
+
+/** Provas com data fixa (kind exam + date presente), ordenadas por data. */
+export function datedExams(entries: ScheduleEntry[]): ScheduleEntry[] {
+  return entries
+    .filter((e) => e.kind === 'exam' && e.date)
+    .sort((a, b) => (a.date! < b.date! ? -1 : a.date! > b.date! ? 1 : toMinutes(a.startTime) - toMinutes(b.startTime)))
+}
+
 export function isWeekend(date: Date = new Date()): boolean {
   const d = date.getDay()
   return d === 0 || d === 6
 }
 
-/** Entradas de um dia específico, já ordenadas por horário. */
+/** Entradas de um dia específico, já ordenadas por horário. Provas com data
+ *  fixa ficam de fora do grid (aparecem nas listas dedicadas). */
 export function entriesByDay(entries: ScheduleEntry[], day: WeekDay): ScheduleEntry[] {
   return entries
-    .filter((entry) => entry.day === day)
+    .filter((entry) => entry.day === day && !entry.date)
     .sort((a, b) => a.startTime.localeCompare(b.startTime))
 }
 
@@ -69,24 +88,61 @@ export function formatWeekday(date: Date = new Date()): string {
 }
 
 /** Próxima prova/avaliação: eventos marcados com kind 'exam', ordenados
- *  pelo dia mais próximo (hoje = 0) e depois pelo horário. */
+ *  pelo dia mais próximo (hoje = 0) e depois pelo horário. Provas com data
+ *  fixa são ordenadas pela data real. */
 export function upcomingExams(entries: ScheduleEntry[], now: Date = new Date()): ScheduleEntry[] {
   return entries
     .filter((e) => e.kind === 'exam')
+    .filter((e) => nextExamDays(e, now) !== null)
     .sort((a, b) => {
-      const da = nextExamDays(a, now)
-      const db = nextExamDays(b, now)
+      const da = nextExamDays(a, now)!
+      const db = nextExamDays(b, now)!
       if (da !== db) return da - db
       return toMinutes(a.startTime) - toMinutes(b.startTime)
     })
 }
 
 /** Dias (0 = hoje) até a prova, considerando se o horário de hoje já passou
- *  (aí passa a contar como 7, ou seja, a partir da próxima semana). */
-export function nextExamDays(entry: ScheduleEntry, now: Date = new Date()): number {
+ *  (aí passa a contar como 7, ou seja, a partir da próxima semana). Para
+ *  provas com data fixa, retorna os dias reais até a data (null se já
+ *  passou). */
+export function nextExamDays(entry: ScheduleEntry, now: Date = new Date()): number | null {
+  if (entry.date) {
+    const target = parseDate(entry.date)
+    target.setHours(
+      ...(entry.startTime.split(':').map(Number) as [number, number]),
+    )
+    const diff = target.getTime() - now.getTime()
+    return diff < 0 ? null : Math.ceil(diff / 86400000)
+  }
   const nowMin = now.getHours() * 60 + now.getMinutes()
   const weekday = (WEEKDAY_INDEX.indexOf(entry.day) + 1) % 7
   const days = daysUntil(weekday, now)
   if (days === 0 && toMinutes(entry.startTime) <= nowMin) return 7
   return days
+}
+
+export interface ConflictInput {
+  day: WeekDay
+  startTime: string
+  endTime: string
+  date?: string
+  excludeId?: string
+}
+
+/** Entradas que se sobrepõem ao horário informado (mesmo dia/intervalo). */
+export function findConflicts(
+  entries: ScheduleEntry[],
+  input: ConflictInput,
+): ScheduleEntry[] {
+  const start = toMinutes(input.startTime)
+  const end = toMinutes(input.endTime)
+  return entries.filter((e) => {
+    if (e.id === input.excludeId) return false
+    if (e.date !== input.date) return false
+    if (e.day !== input.day) return false
+    const eStart = toMinutes(e.startTime)
+    const eEnd = toMinutes(e.endTime)
+    return start < eEnd && end > eStart
+  })
 }

@@ -32,6 +32,9 @@ export interface ScheduleEntry {
   kind?: 'exam'
   startTime: string
   endTime: string
+  /** Data fixa (AAAA-MM-DD) para avaliações pontuais. Quando presente, a
+   *  prova ocorre apenas nessa data, em vez de toda semana. */
+  date?: string
 }
 
 export interface QuickLink {
@@ -65,4 +68,18 @@ export interface Material {
   title?: string
   /** Fixado no topo da lista. */
   pinned?: boolean
+  /** Favorito global (visível na busca global, independente do pin). */
+  favorite?: boolean
+}
+
+/** Nota lançada em uma disciplina (0–10). */
+export interface Grade {
+  id: string
+  subjectId: string
+  /** Nome da avaliação (ex.: 'Prova 1', 'Trabalho'). */
+  name: string
+  /** Valor da nota (0–10). */
+  value: number
+  /** Timestamp de criação em ms. */
+  createdAt: number
 }

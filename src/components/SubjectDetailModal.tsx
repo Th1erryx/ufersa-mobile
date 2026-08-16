@@ -10,16 +10,21 @@ import {
   User,
   X,
   Clock3,
+  GraduationCap,
 } from 'lucide-react'
-import type { Subject, WeekDay } from '@/types'
+import type { Grade, Subject, WeekDay } from '@/types'
 import { dayNames, days, dayLabels } from '@/data/schedule'
 import { formatDuration } from '@/lib/time'
+import { findConflicts } from '@/lib/schedule'
 import { toneFor } from '@/lib/subjectTone'
 import { useSchedule } from '@/context/ScheduleContext'
+import { useGrades } from '@/context/GradesContext'
 import { useModalFocus } from '@/hooks/useModalFocus'
 import { Pressable } from './Pressable'
+import { ConflictNotice } from './ConflictNotice'
 import { SubjectFormModal } from './SubjectFormModal'
 import { MaterialsSection } from './MaterialsSection'
+import { GradeFormModal } from './GradeFormModal'
 
 interface Props {
   subject: Subject
@@ -28,27 +33,44 @@ interface Props {
 
 /** Modal de detalhes de uma disciplina, com edição de dados e horários. */
 export function SubjectDetailModal({ subject, onClose }: Props) {
-  const { entries, addEntry, removeEntry, removeSubject } = useSchedule()
+  const { entries, subjects, addEntry, removeEntry, removeSubject } = useSchedule()
+  const { grades, removeGrade, removeGradesFor, averageFor } = useGrades()
   const focusRef = useModalFocus(true, onClose)
   const [editing, setEditing] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [adding, setAdding] = useState(false)
+  const [addingGrade, setAddingGrade] = useState(false)
+  const [editingGrade, setEditingGrade] = useState<Grade | null>(null)
 
   const [day, setDay] = useState<WeekDay>('seg')
   const [startTime, setStartTime] = useState('08:00')
   const [endTime, setEndTime] = useState('09:50')
+  const [confirmOverride, setConfirmOverride] = useState(false)
 
   const tone = toneFor(subject.tone)
   const classes = entries
     .filter((e) => e.subjectId === subject.id)
     .sort((a, b) => a.startTime.localeCompare(b.startTime))
 
+  const subjectGrades = grades
+    .filter((g) => g.subjectId === subject.id)
+    .sort((a, b) => a.createdAt - b.createdAt)
+  const average = averageFor(subject.id)
+  const approved = average !== null && average >= 7
+
   const canAdd = endTime > startTime
+  const conflicts = findConflicts(entries, { day, startTime, endTime })
+  const subjectById = (id?: string) => (id ? subjects.find((s) => s.id === id) : undefined)
 
   const handleAdd = () => {
     if (!canAdd) return
+    if (conflicts.length > 0 && !confirmOverride) {
+      setConfirmOverride(true)
+      return
+    }
     addEntry({ subjectId: subject.id, day, startTime, endTime })
     setAdding(false)
+    setConfirmOverride(false)
   }
 
   const handleDelete = () => {
@@ -57,6 +79,7 @@ export function SubjectDetailModal({ subject, onClose }: Props) {
       return
     }
     removeSubject(subject.id)
+    removeGradesFor(subject.id)
     onClose()
   }
 
@@ -171,13 +194,19 @@ export function SubjectDetailModal({ subject, onClose }: Props) {
               {!canAdd && (
                 <p className="text-[11px] text-rose-500">O horário de fim deve ser após o início.</p>
               )}
+              <ConflictNotice conflicts={conflicts} subjectById={subjectById} />
+              {confirmOverride && conflicts.length > 0 && (
+                <p className="text-[11px] text-amber-600 dark:text-amber-400">
+                  Toque em Adicionar novamente para confirmar mesmo com conflito.
+                </p>
+              )}
               <button
                 onClick={handleAdd}
                 disabled={!canAdd}
                 className="flex w-full items-center justify-center gap-1.5 rounded-full bg-brand-500 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <CalendarPlus size={15} strokeWidth={2.2} />
-                Adicionar horário
+                {confirmOverride && conflicts.length > 0 ? 'Confirmar mesmo assim' : 'Adicionar horário'}
               </button>
             </div>
           )}
@@ -215,6 +244,83 @@ export function SubjectDetailModal({ subject, onClose }: Props) {
 
         <MaterialsSection subjectId={subject.id} />
 
+        <div className="mt-6">
+          <div className="mb-2 flex items-center justify-between">
+            <h2 className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-500">
+              Notas
+            </h2>
+            <button
+              onClick={() => setAddingGrade(true)}
+              className="flex items-center gap-1 rounded-full bg-brand-500/10 px-2.5 py-1 text-[11px] font-semibold text-brand-700 transition-colors hover:bg-brand-500/20 dark:bg-brand-500/15 dark:text-brand-300"
+            >
+              <Plus size={13} strokeWidth={2.4} />
+              Adicionar
+            </button>
+          </div>
+
+          {average !== null && (
+            <div
+              className={`mb-3 flex items-center justify-between rounded-2xl border p-3.5 ${
+                approved
+                  ? 'border-brand-200 bg-brand-50/60 dark:border-brand-500/25 dark:bg-brand-500/10'
+                  : 'border-rose-200 bg-rose-50/60 dark:border-rose-500/30 dark:bg-rose-500/10'
+              }`}
+            >
+              <span className="flex items-center gap-2 text-sm font-semibold text-zinc-800 dark:text-zinc-200">
+                <GraduationCap size={17} strokeWidth={1.9} />
+                Média: {average.toFixed(2)}
+              </span>
+              <span
+                className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${
+                  approved
+                    ? 'bg-brand-500 text-white'
+                    : 'bg-rose-500 text-white'
+                }`}
+              >
+                {approved ? 'Aprovado' : 'Reprovado'}
+              </span>
+            </div>
+          )}
+
+          {subjectGrades.length > 0 ? (
+            <ul className="space-y-2">
+              {subjectGrades.map((grade) => (
+                <li
+                  key={grade.id}
+                  className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 rounded-2xl border border-zinc-100 bg-zinc-50/60 px-4 py-2.5 dark:border-zinc-800 dark:bg-zinc-800/50"
+                >
+                  <span className="text-sm font-medium text-zinc-800 dark:text-zinc-200">
+                    {grade.name}
+                  </span>
+                  <span className="flex items-center gap-1.5 text-sm tabular-nums text-zinc-500 dark:text-zinc-400">
+                    <span className="font-semibold text-zinc-700 dark:text-zinc-300">
+                      {grade.value.toFixed(2)}
+                    </span>
+                    <button
+                      onClick={() => setEditingGrade(grade)}
+                      aria-label={`Editar nota ${grade.name}`}
+                      className="grid h-7 w-7 place-items-center rounded-full text-zinc-300 transition-colors hover:bg-zinc-100 hover:text-zinc-500 dark:text-zinc-600 dark:hover:bg-zinc-700/60 dark:hover:text-zinc-300"
+                    >
+                      <Pencil size={13} />
+                    </button>
+                    <button
+                      onClick={() => removeGrade(grade.id)}
+                      aria-label={`Remover nota ${grade.name}`}
+                      className="grid h-7 w-7 place-items-center rounded-full text-zinc-300 transition-colors hover:bg-rose-50 hover:text-rose-500 dark:text-zinc-600 dark:hover:bg-rose-500/10 dark:hover:text-rose-400"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+              Nenhuma nota lançada. Toque em Adicionar para registrar suas avaliações.
+            </p>
+          )}
+        </div>
+
         <button
           onClick={handleDelete}
           className={`mt-6 flex w-full items-center justify-center gap-1.5 rounded-full border py-2.5 text-sm font-semibold transition-colors ${
@@ -227,6 +333,13 @@ export function SubjectDetailModal({ subject, onClose }: Props) {
           {confirmDelete ? 'Tem certeza? Toque para excluir' : 'Excluir disciplina'}
         </button>
       </div>
+
+      {addingGrade && (
+        <GradeFormModal subjectId={subject.id} onClose={() => setAddingGrade(false)} />
+      )}
+      {editingGrade && (
+        <GradeFormModal subjectId={subject.id} grade={editingGrade} onClose={() => setEditingGrade(null)} />
+      )}
     </div>
   )
 }

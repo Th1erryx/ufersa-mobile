@@ -33,6 +33,7 @@ import { DEFAULT_CAMPUS_ID } from '@/data/campuses'
 import { student } from '@/data/student'
 import { useSchedule } from '@/context/ScheduleContext'
 import { useMaterials } from '@/context/MaterialsContext'
+import { useGrades } from '@/context/GradesContext'
 import { buildBackup, exportBackup, restoreBackup } from '@/lib/backup'
 import { notificationsSupported, requestNotificationPermission, DEFAULT_NOTIFICATIONS, type NotificationSettings } from '@/lib/notifications'
 import type { ThemePreference } from '@/types'
@@ -54,11 +55,16 @@ export function SettingsPage({ preference, setPreference, onClose, onEditSubject
   const { canInstall, isIos, isStandalone, promptInstall } = useInstallPrompt()
   const { resetAll: resetSchedule, subjects, entries, importData } = useSchedule()
   const { materials, importMaterials, clearMaterials } = useMaterials()
+  const { grades, importGrades, clearGrades } = useGrades()
   const { links, replaceLinks, reset: resetLinks } = useCustomLinks()
   const [notifications, setNotifications] = useLocalStorage<NotificationSettings>(
     'notifications',
     DEFAULT_NOTIFICATIONS,
   )
+  const notificationsNorm: NotificationSettings = {
+    ...DEFAULT_NOTIFICATIONS,
+    ...notifications,
+  }
   const [openSection, setOpenSection] = useState<Section>(null)
   const [backupStatus, setBackupStatus] = useState<'' | 'ok' | 'error'>('')
   const [confirmWipe, setConfirmWipe] = useState(false)
@@ -101,6 +107,7 @@ export function SettingsPage({ preference, setPreference, onClose, onEditSubject
         theme: preference,
         notifications,
         links,
+        grades,
         materials,
       })
       await exportBackup(payload)
@@ -120,8 +127,9 @@ export function SettingsPage({ preference, setPreference, onClose, onEditSubject
         applyCampus: setCampusId,
         applyTheme: setPreference,
         applyNotifications: (n) =>
-          setNotifications({ classes: true, exams: true, ru: true, ...n }),
+          setNotifications({ ...DEFAULT_NOTIFICATIONS, ...n }),
         applyLinks: (linkList) => replaceLinks(linkList),
+        applyGrades: importGrades,
         applyMaterials: importMaterials,
       })
       setBackupStatus('ok')
@@ -144,6 +152,7 @@ export function SettingsPage({ preference, setPreference, onClose, onEditSubject
     setRa(student.ra)
     setQrInput('')
     await clearMaterials()
+    clearGrades()
     setConfirmWipe(false)
   }
 
@@ -412,7 +421,7 @@ export function SettingsPage({ preference, setPreference, onClose, onEditSubject
                 icon={Bell}
                 label="Avisos de aula"
                 description="15 minutos antes do início de cada aula"
-                checked={notifications.classes}
+                checked={notificationsNorm.classes}
                 onChange={(v) => toggleNotification({ classes: v })}
               />
               <div className="mx-5 h-px bg-zinc-100 dark:bg-zinc-800" />
@@ -420,15 +429,36 @@ export function SettingsPage({ preference, setPreference, onClose, onEditSubject
                 icon={FileCheck2}
                 label="Lembretes de prova"
                 description="15 minutos antes de cada avaliação"
-                checked={notifications.exams}
+                checked={notificationsNorm.exams}
                 onChange={(v) => toggleNotification({ exams: v })}
               />
               <div className="mx-5 h-px bg-zinc-100 dark:bg-zinc-800" />
               <ToggleRow
                 icon={BellRing}
+                label="Véspera de prova"
+                description={`Um dia antes, às ${notificationsNorm.examEveTime ?? '18:00'}`}
+                checked={notificationsNorm.examEve}
+                onChange={(v) => toggleNotification({ examEve: v })}
+              >
+                <label className="mt-1 flex items-center gap-2">
+                  <span className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400 dark:text-zinc-500">
+                    Horário
+                  </span>
+                  <input
+                    type="time"
+                    value={notificationsNorm.examEveTime ?? '18:00'}
+                    onChange={(e) => setNotifications({ ...notifications, examEveTime: e.target.value })}
+                    aria-label="Horário do lembrete de véspera"
+                    className="rounded-xl border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-sm font-medium text-zinc-800 outline-none transition-colors focus:border-brand-500 dark:border-zinc-700 dark:bg-zinc-800/70 dark:text-zinc-200"
+                  />
+                </label>
+              </ToggleRow>
+              <div className="mx-5 h-px bg-zinc-100 dark:bg-zinc-800" />
+              <ToggleRow
+                icon={BellRing}
                 label="Lembretes do RU"
                 description="Quando o restaurante universitário abre"
-                checked={notifications.ru}
+                checked={notificationsNorm.ru}
                 onChange={(v) => toggleNotification({ ru: v })}
               />
             </div>
@@ -661,12 +691,14 @@ function ToggleRow({
   description,
   checked,
   onChange,
+  children,
 }: {
   icon: typeof Bell
   label: string
   description: string
   checked: boolean
   onChange: (v: boolean) => void
+  children?: React.ReactNode
 }) {
   return (
     <label className="flex cursor-pointer items-center gap-3 px-5 py-4">
@@ -676,6 +708,7 @@ function ToggleRow({
       <span className="min-w-0 flex-1">
         <span className="block text-sm font-semibold text-zinc-800 dark:text-zinc-200">{label}</span>
         <span className="block text-xs text-zinc-500 dark:text-zinc-400">{description}</span>
+        {children}
       </span>
       <input
         type="checkbox"

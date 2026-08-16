@@ -1,6 +1,7 @@
 import { Capacitor } from "@capacitor/core";
 import { fileStorage } from "@/lib/fileStorage";
 import type {
+  Grade,
   Material,
   QuickLink,
   ScheduleEntry,
@@ -16,8 +17,9 @@ export interface BackupPayload {
   qrCode: string;
   campus: string;
   theme: ThemePreference;
-  notifications: { classes: boolean; exams: boolean; ru: boolean };
+  notifications: { classes: boolean; exams: boolean; ru: boolean; examEve?: boolean; examEveTime?: string };
   links: QuickLink[];
+  grades?: Grade[];
   materials: { material: Material; base64: string | null }[];
 }
 
@@ -30,6 +32,7 @@ export interface BackupDeps {
   theme: ThemePreference;
   notifications: BackupPayload["notifications"];
   links: QuickLink[];
+  grades: Grade[];
   materials: Material[];
 }
 
@@ -65,6 +68,7 @@ export async function buildBackup(deps: BackupDeps): Promise<BackupPayload> {
     theme: deps.theme,
     notifications: deps.notifications,
     links: deps.links,
+    grades: deps.grades,
     materials,
   };
 }
@@ -110,6 +114,7 @@ export interface RestoreTargets {
   applyTheme: (t: ThemePreference) => void;
   applyNotifications: (n: Partial<BackupPayload["notifications"]>) => void;
   applyLinks: (links: QuickLink[]) => void;
+  applyGrades: (grades: Grade[]) => void;
   applyMaterials: (
     materials: { material: Material; base64: string | null }[],
   ) => Promise<void>;
@@ -139,6 +144,7 @@ export async function restoreBackup(
     ...(payload.notifications ?? {}),
   });
   if (payload.links !== undefined) targets.applyLinks(payload.links);
+  if (payload.grades !== undefined) targets.applyGrades(payload.grades);
   const MAX_BASE64 = 50 * 1024 * 1024 * 1.5; // heuristic limit on base64 length
   const materials = (payload.materials ?? [])
     .map((m) => {
@@ -157,4 +163,6 @@ const DEFAULT_RESTORE_NOTIFICATIONS = {
   classes: true,
   exams: true,
   ru: true,
+  examEve: true,
+  examEveTime: '18:00',
 } as const;

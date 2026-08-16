@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { BookPlus, X } from 'lucide-react'
 import { Pressable } from '@/components/Pressable'
+import { ConflictNotice } from '@/components/ConflictNotice'
 import { useSchedule } from '@/context/ScheduleContext'
 import { useModalFocus } from '@/hooks/useModalFocus'
 import { days, dayLabels, dayNames } from '@/data/schedule'
+import { findConflicts } from '@/lib/schedule'
 import type { WeekDay } from '@/types'
 
 interface Props {
@@ -14,17 +16,24 @@ interface Props {
 /** Formulário para adicionar uma aula (de uma disciplina existente) em qualquer dia,
  *  incluindo sábado e domingo. */
 export function ClassFormModal({ initialDay, onClose }: Props) {
-  const { subjects, addEntry } = useSchedule()
+  const { subjects, entries, addEntry } = useSchedule()
   const focusRef = useModalFocus(true, onClose)
   const [subjectId, setSubjectId] = useState(subjects[0]?.id ?? '')
   const [day, setDay] = useState<WeekDay>(initialDay ?? 'sab')
   const [startTime, setStartTime] = useState('08:00')
   const [endTime, setEndTime] = useState('09:50')
+  const [confirmOverride, setConfirmOverride] = useState(false)
 
   const canSave = subjectId.length > 0 && endTime > startTime
+  const conflicts = findConflicts(entries, { day, startTime, endTime })
+  const subjectById = (id?: string) => subjects.find((s) => s.id === id)
 
   const handleSave = () => {
     if (!canSave) return
+    if (conflicts.length > 0 && !confirmOverride) {
+      setConfirmOverride(true)
+      return
+    }
     addEntry({ subjectId, day, startTime, endTime })
     onClose()
   }
@@ -138,6 +147,13 @@ export function ClassFormModal({ initialDay, onClose }: Props) {
             {!canSave && endTime <= startTime && (
               <p className="text-[11px] text-rose-500">O horário de fim deve ser após o início.</p>
             )}
+
+            <ConflictNotice conflicts={conflicts} subjectById={subjectById} />
+            {confirmOverride && conflicts.length > 0 && (
+              <p className="text-[11px] text-amber-600 dark:text-amber-400">
+                Toque em Salvar novamente para confirmar mesmo com conflito.
+              </p>
+            )}
           </div>
         )}
 
@@ -148,7 +164,7 @@ export function ClassFormModal({ initialDay, onClose }: Props) {
             className="flex flex-1 items-center justify-center gap-1.5 rounded-full bg-brand-500 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-40"
           >
             <BookPlus size={16} strokeWidth={2.2} />
-            Adicionar aula
+            {confirmOverride && conflicts.length > 0 ? 'Confirmar mesmo assim' : 'Adicionar aula'}
           </button>
           <button
             onClick={onClose}

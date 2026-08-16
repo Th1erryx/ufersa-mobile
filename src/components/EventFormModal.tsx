@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { CalendarPlus, FileCheck2, Sparkles, X } from 'lucide-react'
 import { Pressable } from '@/components/Pressable'
+import { ConflictNotice } from '@/components/ConflictNotice'
 import { useSchedule } from '@/context/ScheduleContext'
 import { useModalFocus } from '@/hooks/useModalFocus'
 import { days, dayLabels, dayNames } from '@/data/schedule'
+import { dateToWeekDay, findConflicts } from '@/lib/schedule'
 import type { ScheduleEntry, WeekDay } from '@/types'
 
 interface Props {
@@ -15,29 +17,44 @@ interface Props {
 /** Formulário para criar um evento avulso ou prova na grade (sem disciplina
  *  vinculada obrigatória; provas podem ser vinculadas a uma disciplina). */
 export function EventFormModal({ initialDay, initialKind, onClose }: Props) {
-  const { addEntry, subjects } = useSchedule()
+  const { addEntry, subjects, entries } = useSchedule()
   const focusRef = useModalFocus(true, onClose)
   const [kind, setKind] = useState<ScheduleEntry['kind']>(initialKind ?? undefined)
   const [title, setTitle] = useState('')
   const [subjectId, setSubjectId] = useState('')
   const [location, setLocation] = useState('')
   const [day, setDay] = useState<WeekDay>(initialDay ?? 'sab')
+  const [examDate, setExamDate] = useState('')
   const [startTime, setStartTime] = useState('08:00')
   const [endTime, setEndTime] = useState('09:50')
+  const [confirmOverride, setConfirmOverride] = useState(false)
 
   const canSave = endTime > startTime && (kind === 'exam' ? Boolean(subjectId || title.trim()) : Boolean(title.trim()))
   const missingIdentity = endTime > startTime && (kind === 'exam' ? !subjectId && !title.trim() : !title.trim())
 
+  const conflicts = findConflicts(entries, {
+    day: examDate ? dateToWeekDay(examDate) : day,
+    date: kind === 'exam' && examDate ? examDate : undefined,
+    startTime,
+    endTime,
+  })
+  const subjectById = (id?: string) => subjects.find((s) => s.id === id)
+
   const handleSave = () => {
     if (!canSave) return
+    if (conflicts.length > 0 && !confirmOverride) {
+      setConfirmOverride(true)
+      return
+    }
     const entry: Omit<ScheduleEntry, 'id'> = {
-      day,
+      day: examDate ? dateToWeekDay(examDate) : day,
       kind,
       subjectId: subjectId || undefined,
       title: title.trim() || undefined,
       location: location.trim() || undefined,
       startTime,
       endTime,
+      date: kind === 'exam' && examDate ? examDate : undefined,
     }
     addEntry(entry)
     onClose()
@@ -123,6 +140,26 @@ export function EventFormModal({ initialDay, initialKind, onClose }: Props) {
                   </option>
                 ))}
               </select>
+            </label>
+          )}
+
+          {kind === 'exam' && (
+            <label className="block">
+              <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-zinc-400 dark:text-zinc-500">
+                Data da prova (opcional)
+              </span>
+              <input
+                type="date"
+                value={examDate}
+                onChange={(e) => setExamDate(e.target.value)}
+                aria-label="Data da prova"
+                className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 text-sm font-medium text-zinc-800 outline-none transition-colors focus:border-brand-500 dark:border-zinc-700 dark:bg-zinc-800/70 dark:text-zinc-200"
+              />
+              {examDate && (
+                <span className="mt-1 block text-[11px] text-zinc-400 dark:text-zinc-500">
+                  Prova pontual em {new Date(examDate + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })} ({dayNames[dateToWeekDay(examDate)]}). Deixe em branco para repetir toda semana.
+                </span>
+              )}
             </label>
           )}
 
@@ -212,6 +249,13 @@ export function EventFormModal({ initialDay, initialKind, onClose }: Props) {
           {!canSave && !missingIdentity && endTime <= startTime && (
             <p className="text-[11px] text-rose-500">O horário de fim deve ser após o início.</p>
           )}
+
+          <ConflictNotice conflicts={conflicts} subjectById={subjectById} />
+          {confirmOverride && conflicts.length > 0 && (
+            <p className="text-[11px] text-amber-600 dark:text-amber-400">
+              Toque em Salvar novamente para confirmar mesmo com conflito.
+            </p>
+          )}
         </div>
 
         <div className="mt-6 flex gap-2">
@@ -225,7 +269,11 @@ export function EventFormModal({ initialDay, initialKind, onClose }: Props) {
             ) : (
               <CalendarPlus size={16} strokeWidth={2.2} />
             )}
-            {kind === 'exam' ? 'Adicionar prova' : 'Adicionar evento'}
+            {confirmOverride && conflicts.length > 0
+              ? 'Confirmar mesmo assim'
+              : kind === 'exam'
+                ? 'Adicionar prova'
+                : 'Adicionar evento'}
           </button>
           <button
             onClick={onClose}

@@ -8,6 +8,7 @@ import { EmptyState } from '@/components/EmptyState'
 import { dayNames } from '@/data/schedule'
 import { toneFor } from '@/lib/subjectTone'
 import { useSchedule } from '@/context/ScheduleContext'
+import { useGrades } from '@/context/GradesContext'
 import type { Subject } from '@/types'
 
 interface Props {
@@ -16,6 +17,7 @@ interface Props {
 
 export function SubjectsPage({ onOpenSettings }: Props) {
   const { subjects, entries } = useSchedule()
+  const { averageFor } = useGrades()
   const [selected, setSelected] = useState<Subject | null>(null)
   const [creating, setCreating] = useState(false)
 
@@ -64,6 +66,24 @@ export function SubjectsPage({ onOpenSettings }: Props) {
                   {subject.workload}h
                 </p>
               </div>
+              <span className="flex shrink-0 flex-col items-end gap-1">
+                {(() => {
+                  const avg = averageFor(subject.id)
+                  if (avg === null) return null
+                  const approved = avg >= 7
+                  return (
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                        approved
+                          ? 'bg-brand-500/10 text-brand-700 dark:bg-brand-500/15 dark:text-brand-300'
+                          : 'bg-rose-500/10 text-rose-600 dark:bg-rose-500/15 dark:text-rose-400'
+                      }`}
+                    >
+                      {avg.toFixed(2)}
+                    </span>
+                  )
+                })()}
+              </span>
               <ChevronRight
                 size={18}
                 className="shrink-0 text-zinc-300 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-zinc-400 dark:text-zinc-600"
