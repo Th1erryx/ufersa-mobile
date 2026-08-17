@@ -10,9 +10,12 @@ interface ProfileOverrides {
   photo?: string
 }
 
-/** Perfil do estudante, com possibilidade de edição local. */
+/** Perfil do estudante, com possibilidade de edição local. `update` faz merge
+ *  dos campos — não substitui o perfil inteiro (evita que foto e informações
+ *  se apaguem mutuamente). */
 export function useProfile() {
   const [overrides, setOverrides, reset] = useLocalStorage<ProfileOverrides>('profile', {})
   const profile = { ...student, ...overrides }
-  return { profile, update: setOverrides, reset }
+  const update = (patch: ProfileOverrides) => setOverrides((prev) => ({ ...prev, ...patch }))
+  return { profile, update, reset }
 }
