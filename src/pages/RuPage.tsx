@@ -4,7 +4,8 @@ import { PageHeader } from '@/components/PageHeader'
 import { Pressable } from '@/components/Pressable'
 import { QrCodeDisplay } from '@/components/QrCodeDisplay'
 import type { QrCodeHandle } from '@/components/QrCodeDisplay'
-import { ru } from '@/data/qrCode'
+import { useCampus } from '@/hooks/useCampus'
+import { useModalFocus } from '@/hooks/useModalFocus'
 import type { TabId } from '@/components/tabs'
 
 interface Props {
@@ -15,27 +16,28 @@ interface Props {
 export function RuPage({ onNavigate, onOpenSettings }: Props) {
   const qrRef = useRef<QrCodeHandle>(null)
   const [fullscreen, setFullscreen] = useState(false)
+  const { campus } = useCampus()
 
   return (
-    <div className="flex h-full flex-col px-4">
+    <div className="flex h-full flex-col px-4 md:px-6 lg:px-8">
       <PageHeader title="Meu QR Code" subtitle="Restaurante Universitário" onSettings={onOpenSettings} />
 
       <div className="flex flex-1 flex-col items-center justify-center py-2">
         <p className="mb-5 text-center text-sm text-zinc-500 dark:text-zinc-400">
-          Apresente este código no {ru.name.toLowerCase()} ({ru.local}).
+          Apresente este código no Restaurante Universitário ({campus.local}).
         </p>
 
-        <div className="flex w-full max-w-sm flex-col items-center">
+        <div className="flex w-full max-w-sm flex-col items-center md:max-w-lg">
           <div className="w-full animate-scale-in rounded-4xl border border-zinc-200/80 bg-white p-6 shadow-qr dark:border-zinc-700/60">
             <QrCodeDisplay ref={qrRef} className="aspect-square w-full" />
           </div>
 
           <div className="mt-5 w-full rounded-2xl border border-zinc-200/80 bg-white/70 px-4 py-3 text-center dark:border-zinc-800 dark:bg-zinc-900/60">
-            <p className="text-[11px] font-medium uppercase tracking-wide text-zinc-400 dark:text-zinc-500">
+            <h2 className="text-[11px] font-medium uppercase tracking-wide text-zinc-400 dark:text-zinc-500">
               Funcionamento
-            </p>
+            </h2>
             <p className="mt-0.5 text-sm font-medium text-zinc-700 dark:text-zinc-300">
-              Almoço {ru.lunch} · Jantar {ru.dinner}
+              Almoço {campus.ru.lunch} · Jantar {campus.ru.dinner}
             </p>
           </div>
         </div>
@@ -71,10 +73,19 @@ export function RuPage({ onNavigate, onOpenSettings }: Props) {
 }
 
 function FullscreenQr({ onClose }: { onClose: () => void }) {
+  const focusRef = useModalFocus(true, onClose)
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-white dark:bg-zinc-950">
+    <div
+      ref={focusRef}
+      className="fixed inset-0 z-50 flex flex-col bg-white dark:bg-zinc-950"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="qr-fullscreen-title"
+    >
       <div className="flex items-center justify-between px-5 pt-[env(safe-area-inset-top)] pb-2">
-        <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">Meu QR Code</p>
+        <p id="qr-fullscreen-title" className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
+          Meu QR Code
+        </p>
         <Pressable
           onClick={onClose}
           aria-label="Sair da tela cheia"

@@ -64,6 +64,3 @@ export const subjects: Subject[] = [
     tone: 5,
   },
 ]
-
-export const subjectById = (id: string): Subject | undefined =>
-  subjects.find((s) => s.id === id)

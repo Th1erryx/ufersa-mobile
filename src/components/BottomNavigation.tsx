@@ -11,7 +11,7 @@ export function BottomNavigation({ active, onChange }: Props) {
   return (
     <nav
       aria-label="Navegação principal"
-      className="mx-auto w-full max-w-md border-t border-zinc-200/70 bg-white/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-lg dark:border-zinc-800 dark:bg-zinc-950/90"
+      className="w-full border-t border-zinc-200/70 bg-white/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-lg dark:border-zinc-800 dark:bg-zinc-950/90"
     >
       <ul className="grid grid-cols-4">
         {tabs.map(({ id, label, icon: Icon }) => {

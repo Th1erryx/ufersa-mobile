@@ -15,7 +15,7 @@ export const schedule: ScheduleEntry[] = [
   { id: 'sex-socc', day: 'sex', subjectId: 'socc', startTime: '15:55', endTime: '16:45' },
 ]
 
-export const days: WeekDay[] = ['seg', 'ter', 'qua', 'qui', 'sex']
+export const days: WeekDay[] = ['seg', 'ter', 'qua', 'qui', 'sex', 'sab', 'dom']
 
 export const dayLabels: Record<WeekDay, string> = {
   seg: 'SEG',
@@ -23,6 +23,8 @@ export const dayLabels: Record<WeekDay, string> = {
   qua: 'QUA',
   qui: 'QUI',
   sex: 'SEX',
+  sab: 'SÁB',
+  dom: 'DOM',
 }
 
 export const dayNames: Record<WeekDay, string> = {
@@ -31,9 +33,6 @@ export const dayNames: Record<WeekDay, string> = {
   qua: 'Quarta-feira',
   qui: 'Quinta-feira',
   sex: 'Sexta-feira',
+  sab: 'Sábado',
+  dom: 'Domingo',
 }
-
-export const scheduleByDay = (day: WeekDay): ScheduleEntry[] =>
-  schedule
-    .filter((entry) => entry.day === day)
-    .sort((a, b) => a.startTime.localeCompare(b.startTime))
