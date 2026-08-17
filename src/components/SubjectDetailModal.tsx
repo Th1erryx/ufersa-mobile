@@ -12,7 +12,7 @@ import {
   Clock3,
   GraduationCap,
 } from 'lucide-react'
-import type { Grade, Subject, WeekDay } from '@/types'
+import type { Grade, ScheduleEntry, Subject, WeekDay } from '@/types'
 import { dayNames, days, dayLabels } from '@/data/schedule'
 import { formatDuration } from '@/lib/time'
 import { findConflicts } from '@/lib/schedule'
@@ -33,7 +33,7 @@ interface Props {
 
 /** Modal de detalhes de uma disciplina, com edição de dados e horários. */
 export function SubjectDetailModal({ subject, onClose }: Props) {
-  const { entries, subjects, addEntry, removeEntry, removeSubject } = useSchedule()
+  const { entries, subjects, addEntry, updateEntry, removeEntry, removeSubject } = useSchedule()
   const { grades, removeGrade, removeGradesFor, averageFor } = useGrades()
   const focusRef = useModalFocus(true, onClose)
   const [editing, setEditing] = useState(false)
@@ -46,6 +46,7 @@ export function SubjectDetailModal({ subject, onClose }: Props) {
   const [startTime, setStartTime] = useState('08:00')
   const [endTime, setEndTime] = useState('09:50')
   const [confirmOverride, setConfirmOverride] = useState(false)
+  const [editingEntry, setEditingEntry] = useState<ScheduleEntry | null>(null)
 
   const tone = toneFor(subject.tone)
   const classes = entries
@@ -59,16 +60,30 @@ export function SubjectDetailModal({ subject, onClose }: Props) {
   const approved = average !== null && average >= 7
 
   const canAdd = endTime > startTime
-  const conflicts = findConflicts(entries, { day, startTime, endTime })
+  const conflicts = findConflicts(entries, { day, startTime, endTime, excludeId: editingEntry?.id })
   const subjectById = (id?: string) => (id ? subjects.find((s) => s.id === id) : undefined)
 
-  const handleAdd = () => {
+  const handleSave = () => {
     if (!canAdd) return
     if (conflicts.length > 0 && !confirmOverride) {
       setConfirmOverride(true)
       return
     }
-    addEntry({ subjectId: subject.id, day, startTime, endTime })
+    if (editingEntry) {
+      updateEntry(editingEntry.id, { day, startTime, endTime })
+      setEditingEntry(null)
+    } else {
+      addEntry({ subjectId: subject.id, day, startTime, endTime })
+      setAdding(false)
+    }
+    setConfirmOverride(false)
+  }
+
+  const startEditing = (entry: ScheduleEntry) => {
+    setDay(entry.day)
+    setStartTime(entry.startTime)
+    setEndTime(entry.endTime)
+    setEditingEntry(entry)
     setAdding(false)
     setConfirmOverride(false)
   }
@@ -155,15 +170,19 @@ export function SubjectDetailModal({ subject, onClose }: Props) {
               Horários
             </h2>
             <button
-              onClick={() => setAdding((v) => !v)}
+              onClick={() => {
+                setAdding((v) => !v)
+                setEditingEntry(null)
+                setConfirmOverride(false)
+              }}
               className="flex items-center gap-1 rounded-full bg-brand-500/10 px-2.5 py-1 text-[11px] font-semibold text-brand-700 transition-colors hover:bg-brand-500/20 dark:bg-brand-500/15 dark:text-brand-300"
             >
               <Plus size={13} strokeWidth={2.4} />
-              {adding ? 'Cancelar' : 'Adicionar'}
+              {adding || editingEntry ? 'Cancelar' : 'Adicionar'}
             </button>
           </div>
 
-          {adding && (
+          {(adding || editingEntry) && (
             <div className="animate-fade-in mb-3 space-y-2.5 rounded-2xl border border-brand-200 bg-brand-50/60 p-3.5 dark:border-brand-500/25 dark:bg-brand-500/10">
               <label className="block">
                 <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-zinc-400 dark:text-zinc-500">
@@ -201,12 +220,16 @@ export function SubjectDetailModal({ subject, onClose }: Props) {
                 </p>
               )}
               <button
-                onClick={handleAdd}
+                onClick={handleSave}
                 disabled={!canAdd}
                 className="flex w-full items-center justify-center gap-1.5 rounded-full bg-brand-500 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <CalendarPlus size={15} strokeWidth={2.2} />
-                {confirmOverride && conflicts.length > 0 ? 'Confirmar mesmo assim' : 'Adicionar horário'}
+                {confirmOverride && conflicts.length > 0
+                  ? 'Confirmar mesmo assim'
+                  : editingEntry
+                    ? 'Salvar alterações'
+                    : 'Adicionar horário'}
               </button>
             </div>
           )}
@@ -226,6 +249,13 @@ export function SubjectDetailModal({ subject, onClose }: Props) {
                     {entry.startTime} — {entry.endTime}
                     <span className="text-zinc-300 dark:text-zinc-600">·</span>
                     {formatDuration(entry.startTime, entry.endTime)}
+                    <button
+                      onClick={() => startEditing(entry)}
+                      aria-label={`Editar horário de ${dayNames[entry.day]}`}
+                      className="grid h-7 w-7 place-items-center rounded-full text-zinc-300 transition-colors hover:bg-zinc-100 hover:text-zinc-500 dark:text-zinc-600 dark:hover:bg-zinc-700/60 dark:hover:text-zinc-300"
+                    >
+                      <Pencil size={13} />
+                    </button>
                     <button
                       onClick={() => removeEntry(entry.id)}
                       aria-label={`Remover horário de ${dayNames[entry.day]}`}

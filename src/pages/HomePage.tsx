@@ -51,7 +51,6 @@ export function HomePage({ onNavigate, onOpenSettings }: Props) {
     <div className="flex h-full flex-col px-4 md:px-6 lg:px-8">
       <PageHeader
         title="UFERSA Mobile"
-        subtitle="Carteira universitária"
         onSettings={onOpenSettings}
         brand
       />

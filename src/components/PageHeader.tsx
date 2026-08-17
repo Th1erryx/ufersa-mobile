@@ -1,13 +1,14 @@
 import type { ReactNode } from 'react'
 import { Settings } from 'lucide-react'
 import { Pressable } from './Pressable'
+import { UfersaMonogram } from './UfersaMonogram'
 
 interface Props {
   title: string
   subtitle?: string
   onSettings?: () => void
   right?: ReactNode
-  /** Exibe o logo da marca (carteira digital) ao lado do título. */
+  /** Exibe o monograma "U" ao lado do título. */
   brand?: boolean
 }
 
@@ -17,14 +18,7 @@ export function PageHeader({ title, subtitle, onSettings, right, brand }: Props)
     <header className="sticky top-0 z-20 -mx-4 bg-zinc-50/85 px-4 pt-5 pb-3 backdrop-blur-md dark:bg-zinc-950/80 md:-mx-6 lg:-mx-8 md:px-6 lg:px-8">
       <div className="flex items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2.5">
-          {brand && (
-            <img
-              src="/icons/icon-192.png"
-              alt=""
-              aria-hidden="true"
-              className="h-9 w-9 shrink-0 rounded-xl object-contain md:h-11 md:w-11"
-            />
-          )}
+          {brand && <UfersaMonogram size="lg" />}
           <div className="min-w-0">
             <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 md:text-3xl">
               {title}
