@@ -30,7 +30,10 @@ export function useInstallPrompt() {
     }
   }, [])
 
-  const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent)
+  const ua = navigator.userAgent
+  const isIos =
+    /iphone|ipad|ipod/i.test(ua) ||
+    (/Macintosh/i.test(ua) && navigator.maxTouchPoints > 1 && 'ontouchend' in document)
   const isStandalone =
     window.matchMedia('(display-mode: standalone)').matches ||
     (navigator as unknown as { standalone?: boolean }).standalone === true

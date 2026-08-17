@@ -396,7 +396,7 @@ export function SettingsPage({ preference, setPreference, onClose, onEditSubject
                   Instalar
                 </button>
               </div>
-            ) : isIos && !isStandalone ? (
+            ) : isIos ? (
               <div className="rounded-3xl border border-zinc-200/80 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
                 <div className="flex items-start gap-3">
                   <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
@@ -409,6 +409,24 @@ export function SettingsPage({ preference, setPreference, onClose, onEditSubject
                     <p className="mt-0.5 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
                       Toque em <span className="font-semibold">Compartilhar</span> na barra do Safari
                       e escolha <span className="font-semibold">Adicionar à Tela de Início</span>.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : !isStandalone ? (
+              <div className="rounded-3xl border border-zinc-200/80 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+                <div className="flex items-start gap-3">
+                  <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
+                    <Download size={20} strokeWidth={1.9} />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-bold text-zinc-900 dark:text-zinc-50">
+                      Instalar o app
+                    </p>
+                    <p className="mt-0.5 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
+                      Use o menu do navegador (<span className="font-semibold">⋮</span> no Chrome/Edge
+                      ou <span className="font-semibold">Compartilhar</span> no Safari) para{' '}
+                      <span className="font-semibold">adicionar à tela inicial</span> e usar offline.
                     </p>
                   </div>
                 </div>
