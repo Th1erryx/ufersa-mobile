@@ -396,6 +396,15 @@ export function SettingsPage({ preference, setPreference, onClose, onEditSubject
                   Instalar
                 </button>
               </div>
+            ) : Capacitor.isNativePlatform() || isStandalone ? (
+              <div className="flex items-center gap-3 rounded-3xl border border-zinc-200/80 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-brand-500/10 text-brand-600 dark:bg-brand-500/15 dark:text-brand-400">
+                  <CheckCircle2 size={20} strokeWidth={1.9} />
+                </span>
+                <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
+                  App instalado na tela inicial
+                </p>
+              </div>
             ) : isIos ? (
               <div className="rounded-3xl border border-zinc-200/80 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
                 <div className="flex items-start gap-3">
@@ -413,7 +422,7 @@ export function SettingsPage({ preference, setPreference, onClose, onEditSubject
                   </div>
                 </div>
               </div>
-            ) : !isStandalone ? (
+            ) : (
               <div className="rounded-3xl border border-zinc-200/80 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
                 <div className="flex items-start gap-3">
                   <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
@@ -431,16 +440,7 @@ export function SettingsPage({ preference, setPreference, onClose, onEditSubject
                   </div>
                 </div>
               </div>
-            ) : isStandalone ? (
-              <div className="flex items-center gap-3 rounded-3xl border border-zinc-200/80 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
-                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-brand-500/10 text-brand-600 dark:bg-brand-500/15 dark:text-brand-400">
-                  <CheckCircle2 size={20} strokeWidth={1.9} />
-                </span>
-                <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
-                  App instalado na tela inicial
-                </p>
-              </div>
-            ) : null}
+            )}
           </section>
 
           <section className="section-virtualize">
