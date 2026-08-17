@@ -40,3 +40,12 @@ export function formatDaysCountdown(days: number): string {
   if (days === 1) return 'amanhã'
   return `em ${days} dias`
 }
+
+/** Formata uma data "AAAA-MM-DD" no padrão brasileiro dd/mm/aaaa. */
+export function formatDateBR(date: string): string {
+  return new Date(`${date}T12:00:00`).toLocaleDateString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  })
+}

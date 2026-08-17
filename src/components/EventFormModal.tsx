@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { CalendarPlus, FileCheck2, Sparkles, X } from 'lucide-react'
 import { Pressable } from '@/components/Pressable'
+import { inputClass } from '@/lib/ui'
 import { ConflictNotice } from '@/components/ConflictNotice'
 import { useSchedule } from '@/context/ScheduleContext'
 import { useModalFocus } from '@/hooks/useModalFocus'
 import { days, dayLabels, dayNames } from '@/data/schedule'
-import { dateToWeekDay, findConflicts } from '@/lib/schedule'
+import { dateToWeekDay, findConflicts, todayKey } from '@/lib/schedule'
+import { formatDateBR } from '@/lib/time'
 import type { ScheduleEntry, WeekDay } from '@/types'
 
 interface Props {
@@ -23,7 +25,7 @@ export function EventFormModal({ initialDay, initialKind, onClose }: Props) {
   const [title, setTitle] = useState('')
   const [subjectId, setSubjectId] = useState('')
   const [location, setLocation] = useState('')
-  const [day, setDay] = useState<WeekDay>(initialDay ?? 'sab')
+  const [day, setDay] = useState<WeekDay>(initialDay ?? todayKey() ?? 'seg')
   const [examDate, setExamDate] = useState('')
   const [startTime, setStartTime] = useState('08:00')
   const [endTime, setEndTime] = useState('09:50')
@@ -131,7 +133,7 @@ export function EventFormModal({ initialDay, initialKind, onClose }: Props) {
               <select
                 value={subjectId}
                 onChange={(e) => setSubjectId(e.target.value)}
-                className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 text-sm font-medium text-zinc-800 outline-none transition-colors focus:border-brand-500 dark:border-zinc-700 dark:bg-zinc-800/70 dark:text-zinc-200"
+                className={inputClass}
               >
                 <option value="">— Sem disciplina —</option>
                 {subjects.map((s) => (
@@ -153,11 +155,11 @@ export function EventFormModal({ initialDay, initialKind, onClose }: Props) {
                 value={examDate}
                 onChange={(e) => setExamDate(e.target.value)}
                 aria-label="Data da prova"
-                className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 text-sm font-medium text-zinc-800 outline-none transition-colors focus:border-brand-500 dark:border-zinc-700 dark:bg-zinc-800/70 dark:text-zinc-200"
+                className={inputClass}
               />
               {examDate && (
                 <span className="mt-1 block text-[11px] text-zinc-400 dark:text-zinc-500">
-                  Prova pontual em {new Date(examDate + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })} ({dayNames[dateToWeekDay(examDate)]}). Deixe em branco para repetir toda semana.
+                  Prova pontual em {formatDateBR(examDate)} ({dayNames[dateToWeekDay(examDate)]}). Deixe em branco para repetir toda semana.
                 </span>
               )}
             </label>
@@ -173,7 +175,7 @@ export function EventFormModal({ initialDay, initialKind, onClose }: Props) {
               onChange={(e) => setTitle(e.target.value)}
               placeholder={kind === 'exam' ? 'Sem título, usa o nome da disciplina' : 'Ex.: Palestra de IA, Prova de Cálculo…'}
               autoFocus
-              className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 text-sm font-medium text-zinc-800 outline-none transition-colors focus:border-brand-500 dark:border-zinc-700 dark:bg-zinc-800/70 dark:text-zinc-200"
+              className={inputClass}
             />
           </label>
 
@@ -186,7 +188,7 @@ export function EventFormModal({ initialDay, initialKind, onClose }: Props) {
               value={location}
               onChange={(e) => setLocation(e.target.value)}
               placeholder="Ex.: Auditório, Ginásio…"
-              className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 text-sm font-medium text-zinc-800 outline-none transition-colors focus:border-brand-500 dark:border-zinc-700 dark:bg-zinc-800/70 dark:text-zinc-200"
+              className={inputClass}
             />
           </label>
 

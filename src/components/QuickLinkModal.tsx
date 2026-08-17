@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Globe, X } from 'lucide-react'
 import { Pressable } from '@/components/Pressable'
+import { inputClass } from '@/lib/ui'
 import { useModalFocus } from '@/hooks/useModalFocus'
 
 interface Props {
@@ -65,7 +66,7 @@ export function QuickLinkModal({ onAdd, onClose }: Props) {
               onChange={(e) => setLabel(e.target.value)}
               placeholder="Ex.: Moodle"
               autoFocus
-              className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 text-sm font-medium text-zinc-800 outline-none transition-colors focus:border-brand-500 dark:border-zinc-700 dark:bg-zinc-800/70 dark:text-zinc-200"
+              className={inputClass}
             />
           </label>
           <label className="block">
@@ -78,7 +79,7 @@ export function QuickLinkModal({ onAdd, onClose }: Props) {
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               placeholder="exemplo.com ou https://exemplo.com"
-              className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 text-sm font-medium text-zinc-800 outline-none transition-colors focus:border-brand-500 dark:border-zinc-700 dark:bg-zinc-800/70 dark:text-zinc-200"
+              className={inputClass}
             />
           </label>
         </div>

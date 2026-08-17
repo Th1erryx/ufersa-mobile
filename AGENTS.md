@@ -86,6 +86,8 @@ Estas escolhas foram deliberadas — respeite-as e **não as reverta sem antes c
 
 ## Estado atual (branch `develop`)
 
+- **Onboarding no primeiro acesso** (`src/pages/OnboardingPage.tsx`): tela de boas-vindas com monograma U que coleta Nome (obrigatório), Curso e Período e grava o perfil (chave `profile`) antes de liberar o app. Gate em `App.tsx` via flag `onboarded` (localStorage). "Apagar todos os dados" reseta a flag e leva de volta ao onboarding.
+- **Dados padrão vazios**: novo usuário começa do zero — `ScheduleContext` inicializa com `subjects: []`/`entries: []` (sem dados de exemplo) e `src/data/student.ts` é vazio. `src/data/subjects.ts`/`schedule.ts` continuam existindo como referência de formato, mas não são semeados.
 - **QR do RU**: mock por padrão (`src/data/qrCode.ts`, `USER_QR_CODE = ''`); o usuário define o próprio QR nas Configurações (upload de imagem → data URL no localStorage `qrCode`).
 - **Campus configurável**: `src/data/campuses.ts` (Mossoró, Angicos, Caraúbas, Pau dos Ferros — padrão Pau dos Ferros) + `useCampus` (localStorage `campus`); refletido na tela do RU.
 - **Grade editável** via modais (disciplinas + eventos avulsos + **provas**) em `ScheduleContext`. Provas (`ScheduleEntry.kind === 'exam'`) têm destaque visual (rosa), modal próprio (`EventDetailModal`), filtram no `WeeklyGrid` e entram na contagem regressiva da Home (`src/lib/schedule.ts` → `upcomingExams`).
@@ -100,7 +102,8 @@ Estas escolhas foram deliberadas — respeite-as e **não as reverta sem antes c
 - **Links úteis na Home**: SIGAA, Portal do Discente e Site da UFERSA, com favicons locais em `public/favicons/`.
 - **Identidade visual**: logo QR+capelo (fonte `design/logo.svg`) em favicon, PWA e launcher Android (legado + adaptive icon + splash verde `#1d6a43`).
 - Perfil, tema light/dark/system e notificações (reais no APK, Web Notifications no navegador) nas Configurações.
-- PWA configurada (manifest + service worker no build). **Sem deploy feito** — PWA ainda não hospedada.
+- PWA configurada (manifest + service worker no build). **Sem deploy feito** — PWA ainda não hospedada. `vercel.json` já existe (headers de segurança + SPA rewrite) para o deploy na Vercel.
+- **Versão**: `1.2.0` (package.json + `versionCode 2`/`versionName "1.2.0"` no Android).
 
 ## Roadmap
 

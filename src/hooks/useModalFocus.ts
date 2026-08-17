@@ -16,6 +16,9 @@ export function useModalFocus(active: boolean, onClose: () => void) {
     const node = ref.current
     if (!node) return
 
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
     const getFocusable = () =>
       Array.from(node.querySelectorAll<HTMLElement>(FOCUSABLE)).filter(
         (el) => el.offsetParent !== null,
@@ -51,6 +54,7 @@ export function useModalFocus(active: boolean, onClose: () => void) {
     document.addEventListener('keydown', onKeyDown)
     return () => {
       document.removeEventListener('keydown', onKeyDown)
+      document.body.style.overflow = previousOverflow
       previous?.focus?.()
     }
   }, [active])

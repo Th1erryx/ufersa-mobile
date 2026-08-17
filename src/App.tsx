@@ -7,16 +7,25 @@ import { RuPage } from '@/pages/RuPage'
 import { SubjectsPage } from '@/pages/SubjectsPage'
 import { SettingsPage } from '@/pages/SettingsPage'
 import { useTheme } from '@/hooks/useTheme'
+import { useLocalStorage } from '@/hooks/useLocalStorage'
 import { ScheduleProvider } from '@/context/ScheduleContext'
 import { NotificationSync } from '@/hooks/useNotificationSync'
+import { OnboardingPage } from '@/pages/OnboardingPage'
 
 function App() {
   const [tab, setTab] = useState<TabId>('home')
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [onboarded, setOnboarded] = useLocalStorage<boolean>('onboarded', false)
   const { preference, setPreference } = useTheme()
 
-  const page = (() => {
-    switch (tab) {
+  if (!onboarded) {
+    return <OnboardingPage onComplete={() => setOnboarded(true)} />
+  }
+
+  const tabs: TabId[] = ['home', 'schedule', 'ru', 'subjects']
+
+  const renderTab = (t: TabId) => {
+    switch (t) {
       case 'home':
         return <HomePage onNavigate={setTab} onOpenSettings={() => setSettingsOpen(true)} />
       case 'schedule':
@@ -26,16 +35,22 @@ function App() {
       case 'subjects':
         return <SubjectsPage onOpenSettings={() => setSettingsOpen(true)} />
     }
-  })()
+  }
 
   return (
     <ScheduleProvider>
       <NotificationSync />
       <div className="flex h-dvh w-full flex-col overflow-hidden bg-zinc-50 text-zinc-900 transition-colors duration-300 dark:bg-zinc-950">
         <main className="min-h-0 flex-1 overflow-y-auto pb-6 app-scrollbar">
-          <div key={tab} className="h-full animate-fade-in">
-            {page}
-          </div>
+          {tabs.map((t) => (
+            <div
+              key={t}
+              className={t === tab ? 'h-full animate-fade-in' : 'hidden'}
+              aria-hidden={t !== tab}
+            >
+              {renderTab(t)}
+            </div>
+          ))}
         </main>
 
         <div className="relative z-20">

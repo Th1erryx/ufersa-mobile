@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { BookOpen, CalendarClock, FileCheck2, MapPin, Sparkles, Trash2, X } from 'lucide-react'
 import type { ScheduleEntry } from '@/types'
 import { dayNames } from '@/data/schedule'
-import { formatDuration } from '@/lib/time'
+import { formatDuration, formatDateBR } from '@/lib/time'
 import { useSchedule } from '@/context/ScheduleContext'
 import { useModalFocus } from '@/hooks/useModalFocus'
 import { Pressable } from './Pressable'
@@ -33,7 +33,7 @@ export function EventDetailModal({ entry, onClose }: Props) {
 
   const tone = exam ? 'rose' : 'violet'
   const whenLabel = entry.date
-    ? `${new Date(entry.date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })} · ${dayNames[entry.day]} · ${entry.startTime} — ${entry.endTime}`
+    ? `${formatDateBR(entry.date)} · ${dayNames[entry.day]} · ${entry.startTime} — ${entry.endTime}`
     : `${dayNames[entry.day]} · ${entry.startTime} — ${entry.endTime}`
 
   return (

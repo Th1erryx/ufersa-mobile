@@ -8,6 +8,7 @@ import {
   categoryInfo,
   CATEGORY_LABELS,
   guessCategory,
+  formatBytes,
 } from '@/lib/materialFormat'
 import type { MaterialCategory } from '@/types'
 
@@ -127,7 +128,7 @@ export function AddMaterialsModal({ subjectId, files, onClose }: Props) {
                       className="w-full rounded-lg border border-transparent bg-transparent px-0.5 py-0.5 text-sm font-semibold text-zinc-800 outline-none transition-colors focus:border-brand-500 focus:bg-white dark:text-zinc-200 dark:focus:bg-zinc-900"
                     />
                     <p className="truncate px-0.5 text-[11px] text-zinc-400 dark:text-zinc-500">
-                      {file.name} · {formatSize(file.size)}
+                      {file.name} · {formatBytes(file.size)}
                     </p>
                   </div>
                 </div>
@@ -198,16 +199,4 @@ const CATEGORY_OPTIONS = (Object.keys(CATEGORY_LABELS) as MaterialCategory[]).ma
 function extensionOf(name: string): string {
   const dot = name.lastIndexOf('.')
   return dot >= 0 ? name.slice(dot + 1).toLowerCase() : ''
-}
-
-function formatSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`
-  const units = ['KB', 'MB', 'GB']
-  let value = bytes / 1024
-  let unit = units[0]
-  for (let i = 1; i < units.length && value >= 1024; i++) {
-    value /= 1024
-    unit = units[i]
-  }
-  return `${value.toFixed(value >= 10 ? 0 : 1)} ${unit}`
 }

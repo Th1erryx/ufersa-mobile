@@ -4,10 +4,11 @@ interface Props {
   icon: LucideIcon
   title: string
   description?: string
+  action?: { label: string; onClick: () => void }
 }
 
 /** Estado vazio amigável para listas sem conteúdo. */
-export function EmptyState({ icon: Icon, title, description }: Props) {
+export function EmptyState({ icon: Icon, title, description, action }: Props) {
   return (
     <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-zinc-200 px-6 py-10 text-center dark:border-zinc-800 md:py-14">
       <span
@@ -19,6 +20,14 @@ export function EmptyState({ icon: Icon, title, description }: Props) {
       <p className="mt-4 font-medium text-zinc-700 dark:text-zinc-200 md:text-lg">{title}</p>
       {description && (
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400 md:text-base">{description}</p>
+      )}
+      {action && (
+        <button
+          onClick={action.onClick}
+          className="mt-5 flex items-center gap-1.5 rounded-full bg-brand-500 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-600"
+        >
+          {action.label}
+        </button>
       )}
     </div>
   )

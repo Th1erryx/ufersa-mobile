@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react'
+import { useEffect } from 'react'
 import { loadString, saveString } from '@/lib/storage'
 import type { ThemePreference } from '@/types'
 import { useLocalStorage } from './useLocalStorage'
@@ -35,11 +35,7 @@ export function useTheme() {
     }
   }, [preference])
 
-  const resolvedIsDark = useCallback(() => {
-    return preference === 'dark' || (preference === 'system' && systemPrefersDark())
-  }, [preference])
-
-  return { preference, setPreference, resolvedIsDark }
+  return { preference, setPreference }
 }
 
 /** Guarda a preferência fora do estado React (para uso imediato, ex. tela cheia do QR). */

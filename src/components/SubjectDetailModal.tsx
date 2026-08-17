@@ -3,6 +3,7 @@ import {
   BookOpen,
   CalendarClock,
   CalendarPlus,
+  Check,
   MapPin,
   Pencil,
   Plus,
@@ -47,6 +48,7 @@ export function SubjectDetailModal({ subject, onClose }: Props) {
   const [endTime, setEndTime] = useState('09:50')
   const [confirmOverride, setConfirmOverride] = useState(false)
   const [editingEntry, setEditingEntry] = useState<ScheduleEntry | null>(null)
+  const [confirmRemoveEntryId, setConfirmRemoveEntryId] = useState<string | null>(null)
 
   const tone = toneFor(subject.tone)
   const classes = entries
@@ -257,11 +259,25 @@ export function SubjectDetailModal({ subject, onClose }: Props) {
                       <Pencil size={13} />
                     </button>
                     <button
-                      onClick={() => removeEntry(entry.id)}
-                      aria-label={`Remover horário de ${dayNames[entry.day]}`}
-                      className="grid h-7 w-7 place-items-center rounded-full text-zinc-300 transition-colors hover:bg-rose-50 hover:text-rose-500 dark:text-zinc-600 dark:hover:bg-rose-500/10 dark:hover:text-rose-400"
+                      onClick={() => {
+                        if (confirmRemoveEntryId === entry.id) {
+                          removeEntry(entry.id)
+                          setConfirmRemoveEntryId(null)
+                        } else {
+                          setConfirmRemoveEntryId(entry.id)
+                          setTimeout(() => {
+                            setConfirmRemoveEntryId((cur) => (cur === entry.id ? null : cur))
+                          }, 2500)
+                        }
+                      }}
+                      aria-label={`${confirmRemoveEntryId === entry.id ? 'Confirmar remoção do horário de ' : 'Remover horário de '}${dayNames[entry.day]}`}
+                      className={`grid h-7 w-7 place-items-center rounded-full transition-colors hover:bg-rose-50 hover:text-rose-500 dark:hover:bg-rose-500/10 dark:hover:text-rose-400 ${
+                        confirmRemoveEntryId === entry.id
+                          ? 'bg-rose-500 text-white'
+                          : 'text-zinc-300 dark:text-zinc-600'
+                      }`}
                     >
-                      <Trash2 size={14} />
+                      {confirmRemoveEntryId === entry.id ? <Check size={14} /> : <Trash2 size={14} />}
                     </button>
                   </span>
                 </li>

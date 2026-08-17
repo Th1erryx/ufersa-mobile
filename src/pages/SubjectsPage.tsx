@@ -44,7 +44,7 @@ export function SubjectsPage({ onOpenSettings }: Props) {
               key={subject.id}
               onClick={() => setSelected(subject)}
               aria-label={`Ver detalhes de ${subject.name}`}
-              className="group flex w-full items-center gap-3 rounded-3xl border border-zinc-200/80 bg-white p-4 text-left shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-cardHover active:scale-[0.98] dark:border-zinc-800 dark:bg-zinc-900 md:p-5"
+              className="group flex w-full items-center gap-3 rounded-3xl border border-zinc-200/80 bg-white p-4 text-left shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-cardHover dark:border-zinc-800 dark:bg-zinc-900 md:p-5"
             >
               <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-2xl text-sm font-bold ${tone.badge}`}>
                 {subject.name.slice(0, 2).toUpperCase()}
@@ -95,7 +95,7 @@ export function SubjectsPage({ onOpenSettings }: Props) {
         <Pressable
           onClick={() => setCreating(true)}
           aria-label="Adicionar nova disciplina"
-          className="flex w-full items-center justify-center gap-2 rounded-3xl border border-dashed border-zinc-300 bg-transparent py-4 text-sm font-semibold text-zinc-500 transition-all duration-200 hover:border-brand-500 hover:text-brand-600 active:scale-[0.98] dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-brand-500 dark:hover:text-brand-400 md:py-5 md:text-base"
+          className="flex w-full items-center justify-center gap-2 rounded-3xl border border-dashed border-zinc-300 bg-transparent py-4 text-sm font-semibold text-zinc-500 transition-all duration-200 hover:border-brand-500 hover:text-brand-600 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-brand-500 dark:hover:text-brand-400 md:py-5 md:text-base"
         >
           <Plus size={18} strokeWidth={2.2} />
           Nova disciplina

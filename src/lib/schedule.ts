@@ -113,7 +113,10 @@ export function nextExamDays(entry: ScheduleEntry, now: Date = new Date()): numb
       ...(entry.startTime.split(':').map(Number) as [number, number]),
     )
     const diff = target.getTime() - now.getTime()
-    return diff < 0 ? null : Math.ceil(diff / 86400000)
+    if (diff < 0) return null
+    const targetDay = new Date(target.getFullYear(), target.getMonth(), target.getDate())
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    return Math.round((targetDay.getTime() - today.getTime()) / 86400000)
   }
   const nowMin = now.getHours() * 60 + now.getMinutes()
   const weekday = (WEEKDAY_INDEX.indexOf(entry.day) + 1) % 7

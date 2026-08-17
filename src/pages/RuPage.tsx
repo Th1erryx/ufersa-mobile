@@ -46,21 +46,21 @@ export function RuPage({ onNavigate, onOpenSettings }: Props) {
       <div className="mb-1 mt-4 grid grid-cols-3 gap-2.5">
         <Pressable
           onClick={() => setFullscreen(true)}
-          className="flex flex-col items-center gap-1.5 rounded-2xl bg-brand-500 py-3 text-xs font-semibold text-white shadow-card transition-all hover:bg-brand-600 active:scale-[0.96]"
+          className="flex flex-col items-center gap-1.5 rounded-2xl bg-brand-500 py-3 text-xs font-semibold text-white shadow-card transition-all hover:bg-brand-600"
         >
           <Expand size={18} />
           Tela cheia
         </Pressable>
         <Pressable
           onClick={() => qrRef.current?.download()}
-          className="flex flex-col items-center gap-1.5 rounded-2xl border border-zinc-200/80 bg-white py-3 text-xs font-semibold text-zinc-700 shadow-card transition-all active:scale-[0.96] dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300"
+          className="flex flex-col items-center gap-1.5 rounded-2xl border border-zinc-200/80 bg-white py-3 text-xs font-semibold text-zinc-700 shadow-card transition-all dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300"
         >
           <Download size={18} />
           Salvar imagem
         </Pressable>
         <Pressable
           onClick={() => onNavigate('home')}
-          className="flex flex-col items-center gap-1.5 rounded-2xl border border-zinc-200/80 bg-white py-3 text-xs font-semibold text-zinc-700 shadow-card transition-all active:scale-[0.96] dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300"
+          className="flex flex-col items-center gap-1.5 rounded-2xl border border-zinc-200/80 bg-white py-3 text-xs font-semibold text-zinc-700 shadow-card transition-all dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300"
         >
           <ArrowLeft size={18} />
           Voltar
