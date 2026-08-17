@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Plus, X } from 'lucide-react'
 import { Pressable } from '@/components/Pressable'
+import { inputClass } from '@/lib/ui'
 import { useSchedule } from '@/context/ScheduleContext'
 import { useModalFocus } from '@/hooks/useModalFocus'
 import { SUBJECT_TONES } from '@/lib/subjectTone'
@@ -152,7 +153,7 @@ function Field({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         autoFocus={autoFocus}
-        className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 text-sm font-medium text-zinc-800 outline-none transition-colors focus:border-brand-500 dark:border-zinc-700 dark:bg-zinc-800/70 dark:text-zinc-200"
+        className={inputClass}
       />
     </label>
   )
@@ -185,7 +186,7 @@ function NumberField({
         max={max}
         step={step}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 text-sm font-medium text-zinc-800 outline-none transition-colors focus:border-brand-500 dark:border-zinc-700 dark:bg-zinc-800/70 dark:text-zinc-200"
+        className={inputClass}
       />
     </label>
   )

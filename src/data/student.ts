@@ -1,10 +1,10 @@
 import type { Student } from '@/types'
 
-/** Dados pessoais do estudante.
- *  Edite aqui para personalizar o aplicativo. */
+/** Perfil padrão do estudante, vazio até o usuário preencher no onboarding
+ *  ou nas Configurações. */
 export const student: Student = {
-  name: 'Thierry',
-  course: 'BTI — Bacharelado Interdisciplinar em Tecnologia da Informação',
-  period: '2026.2',
-  ra: '202301234',
+  name: '',
+  course: '',
+  period: '',
+  ra: '',
 }

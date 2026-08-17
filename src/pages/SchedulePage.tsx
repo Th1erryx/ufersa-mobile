@@ -9,7 +9,7 @@ import { EventFormModal } from '@/components/EventFormModal'
 import { ClassFormModal } from '@/components/ClassFormModal'
 import { days, dayLabels } from '@/data/schedule'
 import { entriesByDay, todayKey, datedExams, nextExamDays } from '@/lib/schedule'
-import { formatDuration, formatDaysCountdown } from '@/lib/time'
+import { formatDuration, formatDaysCountdown, formatDateBR } from '@/lib/time'
 import { toneFor } from '@/lib/subjectTone'
 import { useSchedule } from '@/context/ScheduleContext'
 import { useNow } from '@/hooks/useNow'
@@ -113,7 +113,7 @@ export function SchedulePage({ onOpenSettings }: Props) {
                       key={entry.id}
                       onClick={() => setSelectedEvent(entry)}
                       aria-label={`Ver detalhes da prova ${label}, ${entry.date}`}
-                      className="flex w-full items-center gap-3 rounded-2xl border border-rose-200 bg-rose-50/60 p-3.5 text-left transition-all duration-200 hover:-translate-y-0.5 hover:shadow-cardHover active:scale-[0.98] dark:border-rose-500/30 dark:bg-rose-500/10 md:p-4"
+                      className="flex w-full items-center gap-3 rounded-2xl border border-rose-200 bg-rose-50/60 p-3.5 text-left transition-all duration-200 hover:-translate-y-0.5 hover:shadow-cardHover dark:border-rose-500/30 dark:bg-rose-500/10 md:p-4"
                     >
                       <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-rose-500 text-white">
                         <FileCheck2 size={18} strokeWidth={1.9} />
@@ -124,7 +124,7 @@ export function SchedulePage({ onOpenSettings }: Props) {
                         </span>
                         <span className="mt-0.5 flex items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400">
                           <span className="tabular-nums">
-                            {new Date(entry.date! + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                            {formatDateBR(entry.date!)}
                           </span>
                           <span className="text-zinc-300 dark:text-zinc-600">·</span>
                           <span className="tabular-nums">{entry.startTime} — {entry.endTime}</span>
@@ -152,7 +152,7 @@ export function SchedulePage({ onOpenSettings }: Props) {
                       key={entry.id}
                       onClick={() => setSelectedEvent(entry)}
                       aria-label={`Ver detalhes da prova ${label}`}
-                      className="w-full rounded-3xl border border-rose-200 bg-rose-50/60 p-4 text-left transition-all duration-200 hover:-translate-y-0.5 hover:shadow-cardHover active:scale-[0.98] dark:border-rose-500/30 dark:bg-rose-500/5 md:p-5"
+                      className="w-full rounded-3xl border border-rose-200 bg-rose-50/60 p-4 text-left transition-all duration-200 hover:-translate-y-0.5 hover:shadow-cardHover dark:border-rose-500/30 dark:bg-rose-500/5 md:p-5"
                     >
                       <div className="flex items-start gap-3">
                         <span className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full bg-rose-500" />
@@ -188,7 +188,7 @@ export function SchedulePage({ onOpenSettings }: Props) {
                     key={entry.id}
                     onClick={() => setSelected(subject)}
                     aria-label={`Ver detalhes de ${subject.name}`}
-                    className="w-full rounded-3xl border border-zinc-200/80 bg-white p-4 text-left shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-cardHover active:scale-[0.98] dark:border-zinc-800 dark:bg-zinc-900"
+                    className="w-full rounded-3xl border border-zinc-200/80 bg-white p-4 text-left shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-cardHover dark:border-zinc-800 dark:bg-zinc-900"
                   >
                     <div className="flex items-start gap-3">
                       <span className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${toneFor(subject.tone).dot}`} />
@@ -224,7 +224,7 @@ export function SchedulePage({ onOpenSettings }: Props) {
                     key={entry.id}
                     onClick={() => setSelectedEvent(entry)}
                     aria-label={`Ver detalhes do evento ${entry.title}`}
-                    className="w-full rounded-3xl border border-dashed border-violet-300 bg-violet-50/50 p-4 text-left transition-all duration-200 hover:-translate-y-0.5 hover:shadow-cardHover active:scale-[0.98] dark:border-violet-500/30 dark:bg-violet-500/5"
+                    className="w-full rounded-3xl border border-dashed border-violet-300 bg-violet-50/50 p-4 text-left transition-all duration-200 hover:-translate-y-0.5 hover:shadow-cardHover dark:border-violet-500/30 dark:bg-violet-500/5"
                   >
                     <div className="flex items-start gap-3">
                       <span className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full bg-violet-500" />
@@ -268,7 +268,7 @@ export function SchedulePage({ onOpenSettings }: Props) {
             <Pressable
               onClick={() => setCreatingClass(true)}
               aria-label="Adicionar nova aula"
-              className="flex w-full items-center justify-center gap-2 rounded-3xl border border-dashed border-brand-400 bg-transparent py-3.5 text-sm font-semibold text-brand-700 transition-all duration-200 hover:border-brand-500 hover:bg-brand-50/50 active:scale-[0.98] dark:border-brand-500/50 dark:text-brand-300 dark:hover:bg-brand-500/10"
+              className="flex w-full items-center justify-center gap-2 rounded-3xl border border-dashed border-brand-400 bg-transparent py-3.5 text-sm font-semibold text-brand-700 transition-all duration-200 hover:border-brand-500 hover:bg-brand-50/50 dark:border-brand-500/50 dark:text-brand-300 dark:hover:bg-brand-500/10"
             >
               <BookPlus size={18} strokeWidth={2.2} />
               Aula
@@ -276,7 +276,7 @@ export function SchedulePage({ onOpenSettings }: Props) {
             <Pressable
               onClick={() => setCreatingEvent(true)}
               aria-label="Adicionar novo evento"
-              className="flex w-full items-center justify-center gap-2 rounded-3xl border border-dashed border-violet-400 bg-transparent py-3.5 text-sm font-semibold text-violet-700 transition-all duration-200 hover:border-violet-500 hover:bg-violet-50/50 active:scale-[0.98] dark:border-violet-500/50 dark:text-violet-300 dark:hover:bg-violet-500/10"
+              className="flex w-full items-center justify-center gap-2 rounded-3xl border border-dashed border-violet-400 bg-transparent py-3.5 text-sm font-semibold text-violet-700 transition-all duration-200 hover:border-violet-500 hover:bg-violet-50/50 dark:border-violet-500/50 dark:text-violet-300 dark:hover:bg-violet-500/10"
             >
               <CalendarPlus size={18} strokeWidth={2.2} />
               Evento
@@ -284,7 +284,7 @@ export function SchedulePage({ onOpenSettings }: Props) {
             <Pressable
               onClick={() => setCreatingExam(true)}
               aria-label="Adicionar nova prova"
-              className="flex w-full items-center justify-center gap-2 rounded-3xl border border-dashed border-rose-400 bg-transparent py-3.5 text-sm font-semibold text-rose-700 transition-all duration-200 hover:border-rose-500 hover:bg-rose-50/50 active:scale-[0.98] dark:border-rose-500/50 dark:text-rose-300 dark:hover:bg-rose-500/10"
+              className="flex w-full items-center justify-center gap-2 rounded-3xl border border-dashed border-rose-400 bg-transparent py-3.5 text-sm font-semibold text-rose-700 transition-all duration-200 hover:border-rose-500 hover:bg-rose-50/50 dark:border-rose-500/50 dark:text-rose-300 dark:hover:bg-rose-500/10"
             >
               <FileCheck2 size={18} strokeWidth={2.2} />
               Prova
@@ -352,64 +352,68 @@ function WeeklyGrid({
               {time}
             </div>
             {days.map((day) => {
-              const entry = entriesByDay(entries, day).find((e) => e.startTime === time)
-              if (!entry) {
+              const slot = entriesByDay(entries, day).filter((e) => e.startTime === time)
+              if (slot.length === 0) {
                 return <div key={day} className="bg-white dark:bg-zinc-900" />
-              }
-              const subject = entry.subjectId ? subjectById(entry.subjectId) : undefined
-              if (!subject && !entry.title) {
-                return <div key={day} className="bg-white dark:bg-zinc-900" />
-              }
-              if (entry.kind === 'exam') {
-                const label = subject?.name ?? entry.title ?? 'Prova'
-                return (
-                  <button
-                    key={day}
-                    onClick={() => onSelectEvent(entry)}
-                    aria-label={`Prova ${label}, ${entry.startTime} às ${entry.endTime}`}
-                    className="m-1 rounded-lg border border-rose-200 bg-rose-50/60 p-1.5 text-left transition-transform active:scale-95 dark:border-rose-500/30 dark:bg-rose-500/10"
-                  >
-                    <span className="block truncate text-[11px] font-semibold leading-tight text-rose-700 dark:text-rose-300">
-                      {label}
-                    </span>
-                    <span className="mt-0.5 block text-[9px] tabular-nums text-zinc-500 dark:text-zinc-400">
-                      {entry.startTime}–{entry.endTime}
-                    </span>
-                  </button>
-                )
-              }
-              if (subject) {
-                const tone = toneFor(subject.tone)
-                return (
-                  <button
-                    key={day}
-                    onClick={() => onSelect(subject)}
-                    aria-label={`${subject.name}, ${entry.startTime} às ${entry.endTime}`}
-                    className={`m-1 rounded-lg border p-1.5 text-left transition-transform active:scale-95 ${tone.weekCell}`}
-                  >
-                    <span className={`block truncate text-[11px] font-semibold leading-tight ${tone.weekText}`}>
-                      {subject.name}
-                    </span>
-                    <span className="mt-0.5 block text-[9px] tabular-nums text-zinc-500 dark:text-zinc-400">
-                      {entry.startTime}–{entry.endTime}
-                    </span>
-                  </button>
-                )
               }
               return (
-                <button
-                  key={day}
-                  onClick={() => onSelectEvent(entry)}
-                  aria-label={`Evento ${entry.title}, ${entry.startTime} às ${entry.endTime}`}
-                  className="m-1 rounded-lg border border-dashed border-violet-300 bg-violet-50/60 p-1.5 text-left transition-transform active:scale-95 dark:border-violet-500/30 dark:bg-violet-500/10"
-                >
-                  <span className="block truncate text-[11px] font-semibold leading-tight text-violet-700 dark:text-violet-300">
-                    {entry.title}
-                  </span>
-                  <span className="mt-0.5 block text-[9px] tabular-nums text-zinc-500 dark:text-zinc-400">
-                    {entry.startTime}–{entry.endTime}
-                  </span>
-                </button>
+                <div key={day} className="flex min-w-0 flex-col bg-white dark:bg-zinc-900">
+                  {slot.map((entry) => {
+                    const subject = entry.subjectId ? subjectById(entry.subjectId) : undefined
+                    if (!subject && !entry.title) return null
+                    if (entry.kind === 'exam') {
+                      const label = subject?.name ?? entry.title ?? 'Prova'
+                      return (
+                        <button
+                          key={entry.id}
+                          onClick={() => onSelectEvent(entry)}
+                          aria-label={`Prova ${label}, ${entry.startTime} às ${entry.endTime}`}
+                          className="m-1 rounded-lg border border-rose-200 bg-rose-50/60 p-1.5 text-left transition-transform active:scale-95 dark:border-rose-500/30 dark:bg-rose-500/10"
+                        >
+                          <span className="block truncate text-[11px] font-semibold leading-tight text-rose-700 dark:text-rose-300">
+                            {label}
+                          </span>
+                          <span className="mt-0.5 block text-[9px] tabular-nums text-zinc-500 dark:text-zinc-400">
+                            {entry.startTime}–{entry.endTime}
+                          </span>
+                        </button>
+                      )
+                    }
+                    if (subject) {
+                      const tone = toneFor(subject.tone)
+                      return (
+                        <button
+                          key={entry.id}
+                          onClick={() => onSelect(subject)}
+                          aria-label={`${subject.name}, ${entry.startTime} às ${entry.endTime}`}
+                          className={`m-1 rounded-lg border p-1.5 text-left transition-transform active:scale-95 ${tone.weekCell}`}
+                        >
+                          <span className={`block truncate text-[11px] font-semibold leading-tight ${tone.weekText}`}>
+                            {subject.name}
+                          </span>
+                          <span className="mt-0.5 block text-[9px] tabular-nums text-zinc-500 dark:text-zinc-400">
+                            {entry.startTime}–{entry.endTime}
+                          </span>
+                        </button>
+                      )
+                    }
+                    return (
+                      <button
+                        key={entry.id}
+                        onClick={() => onSelectEvent(entry)}
+                        aria-label={`Evento ${entry.title}, ${entry.startTime} às ${entry.endTime}`}
+                        className="m-1 rounded-lg border border-dashed border-violet-300 bg-violet-50/60 p-1.5 text-left transition-transform active:scale-95 dark:border-violet-500/30 dark:bg-violet-500/10"
+                      >
+                        <span className="block truncate text-[11px] font-semibold leading-tight text-violet-700 dark:text-violet-300">
+                          {entry.title}
+                        </span>
+                        <span className="mt-0.5 block text-[9px] tabular-nums text-zinc-500 dark:text-zinc-400">
+                          {entry.startTime}–{entry.endTime}
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
               )
             })}
           </div>

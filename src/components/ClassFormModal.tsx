@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { BookPlus, X } from 'lucide-react'
 import { Pressable } from '@/components/Pressable'
+import { inputClass } from '@/lib/ui'
 import { ConflictNotice } from '@/components/ConflictNotice'
 import { useSchedule } from '@/context/ScheduleContext'
 import { useModalFocus } from '@/hooks/useModalFocus'
 import { days, dayLabels, dayNames } from '@/data/schedule'
-import { findConflicts } from '@/lib/schedule'
+import { findConflicts, todayKey } from '@/lib/schedule'
 import type { WeekDay } from '@/types'
 
 interface Props {
@@ -19,7 +20,7 @@ export function ClassFormModal({ initialDay, onClose }: Props) {
   const { subjects, entries, addEntry } = useSchedule()
   const focusRef = useModalFocus(true, onClose)
   const [subjectId, setSubjectId] = useState(subjects[0]?.id ?? '')
-  const [day, setDay] = useState<WeekDay>(initialDay ?? 'sab')
+  const [day, setDay] = useState<WeekDay>(initialDay ?? todayKey() ?? 'seg')
   const [startTime, setStartTime] = useState('08:00')
   const [endTime, setEndTime] = useState('09:50')
   const [confirmOverride, setConfirmOverride] = useState(false)
@@ -85,7 +86,7 @@ export function ClassFormModal({ initialDay, onClose }: Props) {
               <select
                 value={subjectId}
                 onChange={(e) => setSubjectId(e.target.value)}
-                className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 text-sm font-medium text-zinc-800 outline-none transition-colors focus:border-brand-500 dark:border-zinc-700 dark:bg-zinc-800/70 dark:text-zinc-200"
+                className={inputClass}
               >
                 {subjects.map((s) => (
                   <option key={s.id} value={s.id}>

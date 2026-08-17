@@ -9,6 +9,7 @@ import {
   ChevronRight,
   Download,
   FileCheck2,
+  Loader2,
   Monitor,
   Moon,
   PencilLine,
@@ -35,6 +36,8 @@ import { useSchedule } from '@/context/ScheduleContext'
 import { useMaterials } from '@/context/MaterialsContext'
 import { useGrades } from '@/context/GradesContext'
 import { buildBackup, exportBackup, restoreBackup } from '@/lib/backup'
+import { saveJson } from '@/lib/storage'
+import { inputClass } from '@/lib/ui'
 import { notificationsSupported, requestNotificationPermission, DEFAULT_NOTIFICATIONS, type NotificationSettings } from '@/lib/notifications'
 import type { ThemePreference } from '@/types'
 
@@ -67,6 +70,7 @@ export function SettingsPage({ preference, setPreference, onClose, onEditSubject
   }
   const [openSection, setOpenSection] = useState<Section>(null)
   const [backupStatus, setBackupStatus] = useState<'' | 'ok' | 'error'>('')
+  const [backupBusy, setBackupBusy] = useState(false)
   const [confirmWipe, setConfirmWipe] = useState(false)
   const [photoViewer, setPhotoViewer] = useState(false)
   const [editingProfile, setEditingProfile] = useState(false)
@@ -97,6 +101,7 @@ export function SettingsPage({ preference, setPreference, onClose, onEditSubject
 
   const handleExport = async () => {
     setBackupStatus('')
+    setBackupBusy(true)
     try {
       const payload = await buildBackup({
         subjects,
@@ -113,11 +118,14 @@ export function SettingsPage({ preference, setPreference, onClose, onEditSubject
       await exportBackup(payload)
     } catch {
       setBackupStatus('error')
+    } finally {
+      setBackupBusy(false)
     }
   }
 
   const handleRestore = async (file: File) => {
     setBackupStatus('')
+    setBackupBusy(true)
     try {
       const text = await file.text()
       await restoreBackup(text, {
@@ -135,6 +143,8 @@ export function SettingsPage({ preference, setPreference, onClose, onEditSubject
       setBackupStatus('ok')
     } catch {
       setBackupStatus('error')
+    } finally {
+      setBackupBusy(false)
     }
   }
 
@@ -153,6 +163,7 @@ export function SettingsPage({ preference, setPreference, onClose, onEditSubject
     setQrInput('')
     await clearMaterials()
     clearGrades()
+    saveJson('onboarded', false)
     setConfirmWipe(false)
   }
 
@@ -481,14 +492,20 @@ export function SettingsPage({ preference, setPreference, onClose, onEditSubject
               <div className="mt-4 flex gap-2">
                 <button
                   onClick={handleExport}
-                  className="flex flex-1 items-center justify-center gap-2 rounded-full bg-brand-500 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-600"
+                  disabled={backupBusy}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-full bg-brand-500 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-40"
                 >
-                  <Download size={15} strokeWidth={2.2} />
+                  {backupBusy ? (
+                    <Loader2 size={15} strokeWidth={2.2} className="animate-spin" />
+                  ) : (
+                    <Download size={15} strokeWidth={2.2} />
+                  )}
                   Exportar
                 </button>
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="flex flex-1 items-center justify-center gap-2 rounded-full border border-zinc-200 py-2.5 text-sm font-semibold text-zinc-600 transition-colors hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                  disabled={backupBusy}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-full border border-zinc-200 py-2.5 text-sm font-semibold text-zinc-600 transition-colors hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800"
                 >
                   <Upload size={15} strokeWidth={2.2} />
                   Restaurar
@@ -591,11 +608,8 @@ export function SettingsPage({ preference, setPreference, onClose, onEditSubject
                 plain
               >
                 <p className="text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
-                  Restaura as disciplinas e horários originais de{' '}
-                  <code className="rounded bg-zinc-100 px-1 py-0.5 text-[11px] text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
-                    src/data
-                  </code>
-                  . As alterações feitas aqui serão perdidas.
+                  Apaga todas as disciplinas, horários e provas da grade, voltando ao estado
+                  inicial do app.
                 </p>
                 <div className="flex gap-2 pt-1">
                   <button
@@ -701,11 +715,14 @@ function ToggleRow({
   children?: React.ReactNode
 }) {
   return (
-    <label className="flex cursor-pointer items-center gap-3 px-5 py-4">
+    <div
+      className="flex cursor-pointer items-center gap-3 px-5 py-4"
+      onClick={() => onChange(!checked)}
+    >
       <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
         <Icon size={18} strokeWidth={1.9} />
       </span>
-      <span className="min-w-0 flex-1">
+      <span className="min-w-0 flex-1" onClick={(e) => e.stopPropagation()}>
         <span className="block text-sm font-semibold text-zinc-800 dark:text-zinc-200">{label}</span>
         <span className="block text-xs text-zinc-500 dark:text-zinc-400">{description}</span>
         {children}
@@ -729,7 +746,7 @@ function ToggleRow({
           }`}
         />
       </span>
-    </label>
+    </div>
   )
 }
 
@@ -750,21 +767,30 @@ function DataButton({
 }) {
   return (
     <div>
-      <Pressable
-        onClick={onClick}
-        className="flex w-full items-center gap-3 px-5 py-4 text-left transition-all duration-150 hover:bg-zinc-50 dark:hover:bg-zinc-800/60"
-        aria-expanded={expanded}
-      >
-        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
-          <Icon size={18} strokeWidth={1.9} />
-        </span>
-        <span className="flex-1 text-sm font-semibold text-zinc-800 dark:text-zinc-200">{label}</span>
-        <ChevronRight
-          aria-hidden="true"
-          size={18}
-          className={`shrink-0 text-zinc-300 transition-transform duration-200 dark:text-zinc-600 ${expanded ? 'rotate-90' : ''}`}
-        />
-      </Pressable>
+      {plain ? (
+        <div className="flex w-full items-center gap-3 px-5 py-4">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
+            <Icon size={18} strokeWidth={1.9} />
+          </span>
+          <span className="flex-1 text-sm font-semibold text-zinc-800 dark:text-zinc-200">{label}</span>
+        </div>
+      ) : (
+        <Pressable
+          onClick={onClick}
+          className="flex w-full items-center gap-3 px-5 py-4 text-left transition-all duration-150 hover:bg-zinc-50 dark:hover:bg-zinc-800/60"
+          aria-expanded={expanded}
+        >
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
+            <Icon size={18} strokeWidth={1.9} />
+          </span>
+          <span className="flex-1 text-sm font-semibold text-zinc-800 dark:text-zinc-200">{label}</span>
+          <ChevronRight
+            aria-hidden="true"
+            size={18}
+            className={`shrink-0 text-zinc-300 transition-transform duration-200 dark:text-zinc-600 ${expanded ? 'rotate-90' : ''}`}
+          />
+        </Pressable>
+      )}
       {expanded && children && <div className="animate-fade-in px-5 pb-4">{children}</div>}
       {plain && children && <div className="animate-fade-in px-5 pb-4">{children}</div>}
     </div>
@@ -792,7 +818,7 @@ function Field({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full rounded-xl border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 text-sm font-medium text-zinc-800 outline-none transition-colors focus:border-brand-500 dark:border-zinc-700 dark:bg-zinc-800/70 dark:text-zinc-200"
+        className={inputClass}
       />
     </label>
   )

@@ -58,10 +58,11 @@ export function HomePage({ onNavigate, onOpenSettings }: Props) {
       <div className="flex-1 space-y-6 md:space-y-8">
         <section className="animate-slide-up">
           <h2 className="text-[26px] font-bold leading-tight tracking-tight text-zinc-900 dark:text-zinc-50 md:text-4xl">
-            Olá, {profile.name.split(' ')[0]} 👋
+            Olá, {profile.name.split(' ')[0] || 'estudante'} 👋
           </h2>
           <p className="mt-1.5 text-sm text-zinc-500 dark:text-zinc-400 md:mt-2 md:text-base">
-            {formatWeekday(now)} · {profile.period}
+            {formatWeekday(now)}
+            {profile.period ? ` · ${profile.period}` : ''}
           </p>
         </section>
 
@@ -173,7 +174,7 @@ export function HomePage({ onNavigate, onOpenSettings }: Props) {
                     key={entry.id}
                     onClick={() => onNavigate('schedule')}
                     aria-label={`Prova ${name}, ${dayNames[entry.day]} às ${entry.startTime}`}
-                    className={`flex w-full items-center gap-3 rounded-2xl border p-3.5 text-left transition-all duration-200 active:scale-[0.98] md:p-4 ${
+                    className={`flex w-full items-center gap-3 rounded-2xl border p-3.5 text-left transition-all duration-200 md:p-4 ${
                       isFirst
                         ? 'border-rose-200 bg-rose-50/70 dark:border-rose-500/30 dark:bg-rose-500/10'
                         : 'border-zinc-200/80 bg-white dark:border-zinc-800 dark:bg-zinc-900'
@@ -222,7 +223,7 @@ export function HomePage({ onNavigate, onOpenSettings }: Props) {
             <Pressable
               onClick={() => onNavigate('ru')}
               aria-label="Mostrar QR Code do RU"
-              className="group rounded-3xl border border-zinc-200/80 bg-white p-4 text-left shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-cardHover active:scale-[0.97] dark:border-zinc-800 dark:bg-zinc-900 md:p-5"
+              className="group rounded-3xl border border-zinc-200/80 bg-white p-4 text-left shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-cardHover dark:border-zinc-800 dark:bg-zinc-900 md:p-5"
             >
               <span className="grid h-11 w-11 place-items-center rounded-2xl bg-brand-500/10 text-brand-600 transition-transform duration-200 group-hover:scale-110 dark:text-brand-400 md:h-12 md:w-12">
                 <QrCode size={22} strokeWidth={1.9} />
@@ -234,7 +235,7 @@ export function HomePage({ onNavigate, onOpenSettings }: Props) {
             <Pressable
               onClick={() => onNavigate('schedule')}
               aria-label="Ver minha grade de horários"
-              className="group rounded-3xl border border-zinc-200/80 bg-white p-4 text-left shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-cardHover active:scale-[0.97] dark:border-zinc-800 dark:bg-zinc-900 md:p-5"
+              className="group rounded-3xl border border-zinc-200/80 bg-white p-4 text-left shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-cardHover dark:border-zinc-800 dark:bg-zinc-900 md:p-5"
             >
               <span className="grid h-11 w-11 place-items-center rounded-2xl bg-zinc-100 text-zinc-600 transition-transform duration-200 group-hover:scale-110 dark:bg-zinc-800 dark:text-zinc-300 md:h-12 md:w-12">
                 <CalendarDays size={22} strokeWidth={1.9} />
@@ -246,7 +247,7 @@ export function HomePage({ onNavigate, onOpenSettings }: Props) {
             <Pressable
               onClick={() => setMaterialsOpen(true)}
               aria-label="Ver todos os materiais"
-              className="group rounded-3xl border border-zinc-200/80 bg-white p-4 text-left shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-cardHover active:scale-[0.97] dark:border-zinc-800 dark:bg-zinc-900 md:p-5"
+              className="group rounded-3xl border border-zinc-200/80 bg-white p-4 text-left shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-cardHover dark:border-zinc-800 dark:bg-zinc-900 md:p-5"
             >
               <span className="grid h-11 w-11 place-items-center rounded-2xl bg-amber-500/10 text-amber-600 transition-transform duration-200 group-hover:scale-110 dark:text-amber-400 md:h-12 md:w-12">
                 <FolderOpen size={22} strokeWidth={1.9} />
@@ -288,6 +289,10 @@ export function HomePage({ onNavigate, onOpenSettings }: Props) {
               icon={CalendarDays}
               title={isWeekend(now) ? 'Fim de semana' : 'Nenhuma atividade hoje'}
               description="Aproveite o tempo livre."
+              action={{
+                label: 'Ver grade da semana',
+                onClick: () => onNavigate('schedule'),
+              }}
             />
           )}
         </section>
@@ -313,7 +318,7 @@ export function HomePage({ onNavigate, onOpenSettings }: Props) {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label={`Abrir ${label} em nova aba`}
-                className="group flex items-center gap-3 rounded-2xl border border-zinc-200/80 bg-white px-3.5 py-3 shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-cardHover active:scale-[0.97] dark:border-zinc-800 dark:bg-zinc-900 md:px-4 md:py-4"
+                className="group flex items-center gap-3 rounded-2xl border border-zinc-200/80 bg-white px-3.5 py-3 shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-cardHover dark:border-zinc-800 dark:bg-zinc-900 md:px-4 md:py-4"
               >
                 <span className="grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-xl bg-zinc-100 transition-transform duration-200 group-hover:scale-110 dark:bg-zinc-800 md:h-10 md:w-10">
                   <img
@@ -340,7 +345,7 @@ export function HomePage({ onNavigate, onOpenSettings }: Props) {
             {customLinks.map(({ id, label, url }) => (
               <div
                 key={id}
-                className="group relative rounded-2xl border border-zinc-200/80 bg-white shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-cardHover active:scale-[0.97] dark:border-zinc-800 dark:bg-zinc-900"
+                className="group relative rounded-2xl border border-zinc-200/80 bg-white shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-cardHover dark:border-zinc-800 dark:bg-zinc-900"
               >
                 <a
                   href={url}

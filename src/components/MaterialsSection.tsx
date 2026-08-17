@@ -1,16 +1,11 @@
 import { useMemo, useRef, useState } from 'react'
 import {
-  ArrowDown,
-  ArrowUp,
   CalendarClock,
-  Eye,
   FileUp,
-  Pencil,
+  MoreVertical,
   Pin,
   Search,
-  Share2,
   Star,
-  Trash2,
 } from 'lucide-react'
 import { Pressable } from '@/components/Pressable'
 import { EmptyState } from '@/components/EmptyState'
@@ -48,6 +43,7 @@ export function MaterialsSection({ subjectId }: Props) {
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState<Filter>('all')
   const [error, setError] = useState<string | null>(null)
+  const [menuOpen, setMenuOpen] = useState<string | null>(null)
 
   const all = useMemo(
     () =>
@@ -210,7 +206,7 @@ export function MaterialsSection({ subjectId }: Props) {
                     </span>
                   </span>
                 </Pressable>
-                <span className="flex shrink-0 items-center gap-1">
+                <span className="flex shrink-0 items-center gap-0.5">
                   <IconButton
                     label={material.favorite ? `Remover dos favoritos ${material.title ?? material.name}` : `Favoritar ${material.title ?? material.name}`}
                     onClick={() => toggleFavorite(material.id)}
@@ -225,43 +221,63 @@ export function MaterialsSection({ subjectId }: Props) {
                   >
                     <Pin size={14} className={material.pinned ? 'fill-brand-500 dark:fill-brand-400' : ''} />
                   </IconButton>
-                  <IconButton
-                    label={`Mover ${material.title ?? material.name} para cima`}
-                    onClick={() => moveMaterial(material.id, -1)}
-                  >
-                    <ArrowUp size={14} />
-                  </IconButton>
-                  <IconButton
-                    label={`Mover ${material.title ?? material.name} para baixo`}
-                    onClick={() => moveMaterial(material.id, 1)}
-                  >
-                    <ArrowDown size={14} />
-                  </IconButton>
-                  <IconButton
-                    label={`Ver ${material.title ?? material.name}`}
-                    onClick={() => openMaterial(material.id, mimeForExtension(material.extension))}
-                  >
-                    <Eye size={15} />
-                  </IconButton>
-                  <IconButton
-                    label={`Editar ${material.title ?? material.name}`}
-                    onClick={() => setEditing(material)}
-                  >
-                    <Pencil size={14} />
-                  </IconButton>
-                  <IconButton
-                    label={`Compartilhar ${material.title ?? material.name}`}
-                    onClick={() => shareMaterial(material.id)}
-                  >
-                    <Share2 size={14} />
-                  </IconButton>
-                  <IconButton
-                    label={`Excluir ${material.title ?? material.name}`}
-                    danger
-                    onClick={() => handleRemove(material.id, material.name)}
-                  >
-                    <Trash2 size={14} />
-                  </IconButton>
+                  <div className="relative">
+                    <IconButton
+                      label={`Mais ações para ${material.title ?? material.name}`}
+                      onClick={() => setMenuOpen(material.id)}
+                      className={menuOpen === material.id ? 'bg-zinc-100 text-zinc-600 dark:bg-zinc-700/60 dark:text-zinc-300' : undefined}
+                    >
+                      <MoreVertical size={16} />
+                    </IconButton>
+                    {menuOpen === material.id && (
+                      <>
+                        <div
+                          className="fixed inset-0 z-10"
+                          onClick={() => setMenuOpen(null)}
+                          aria-hidden="true"
+                        />
+                        <div className="animate-scale-in absolute right-0 top-full z-20 mt-1 w-44 overflow-hidden rounded-2xl border border-zinc-200 bg-white py-1 shadow-qr dark:border-zinc-700 dark:bg-zinc-800">
+                          <MenuItem
+                            label="Mover para cima"
+                            onClick={() => {
+                              moveMaterial(material.id, -1)
+                              setMenuOpen(null)
+                            }}
+                          />
+                          <MenuItem
+                            label="Mover para baixo"
+                            onClick={() => {
+                              moveMaterial(material.id, 1)
+                              setMenuOpen(null)
+                            }}
+                          />
+                          <MenuItem
+                            label="Editar"
+                            onClick={() => {
+                              setEditing(material)
+                              setMenuOpen(null)
+                            }}
+                          />
+                          <MenuItem
+                            label="Compartilhar"
+                            onClick={() => {
+                              shareMaterial(material.id)
+                              setMenuOpen(null)
+                            }}
+                          />
+                          <div className="mx-3 my-1 h-px bg-zinc-100 dark:bg-zinc-700" />
+                          <MenuItem
+                            label="Excluir"
+                            danger
+                            onClick={() => {
+                              setMenuOpen(null)
+                              handleRemove(material.id, material.name)
+                            }}
+                          />
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </span>
               </li>
             )
@@ -320,5 +336,28 @@ function IconButton({
     >
       {children}
     </Pressable>
+  )
+}
+
+function MenuItem({
+  label,
+  danger,
+  onClick,
+}: {
+  label: string
+  danger?: boolean
+  onClick: () => void
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`w-full px-4 py-2.5 text-left text-sm font-medium transition-colors ${
+        danger
+          ? 'text-rose-500 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-500/10'
+          : 'text-zinc-700 hover:bg-zinc-50 dark:text-zinc-200 dark:hover:bg-zinc-700/60'
+      }`}
+    >
+      {label}
+    </button>
   )
 }

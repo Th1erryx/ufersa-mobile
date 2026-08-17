@@ -1,6 +1,4 @@
 import { createContext, useCallback, useContext, useMemo, type ReactNode } from 'react'
-import { subjects as defaultSubjects } from '@/data/subjects'
-import { schedule as defaultSchedule } from '@/data/schedule'
 import { useLocalStorage } from '@/hooks/useLocalStorage'
 import type { ScheduleEntry, Subject } from '@/types'
 
@@ -25,13 +23,12 @@ const ScheduleContext = createContext<ScheduleContextValue | null>(null)
 const uid = (prefix: string) =>
   `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`
 
-/** Estado da grade/disciplinas, persistido em localStorage e iniciado
- *  com os valores padrão de src/data. Toda alteração reflete em tempo
- *  real nas telas Home, Grade e Disciplinas. */
+/** Estado da grade/disciplinas, persistido em localStorage. Toda alteração
+ *  reflete em tempo real nas telas Home, Grade e Disciplinas. */
 export function ScheduleProvider({ children }: { children: ReactNode }) {
   const [data, setData, reset] = useLocalStorage<ScheduleData>('schedule', {
-    subjects: defaultSubjects,
-    entries: defaultSchedule,
+    subjects: [],
+    entries: [],
   })
 
   const addSubject = useCallback(

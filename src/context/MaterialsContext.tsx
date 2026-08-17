@@ -102,8 +102,12 @@ export function MaterialsProvider({ children }: { children: ReactNode }) {
 
   const removeMaterial = useCallback(
     async (id: string) => {
-      setMaterials((prev) => prev.filter((m) => m.id !== id));
-      await fileStorage.remove(id);
+      try {
+        await fileStorage.remove(id);
+        setMaterials((prev) => prev.filter((m) => m.id !== id));
+      } catch {
+        // mantém o item na lista se o binário não pôde ser excluído
+      }
     },
     [setMaterials],
   );
@@ -125,7 +129,11 @@ export function MaterialsProvider({ children }: { children: ReactNode }) {
     const blob = await fileStorage.load(id);
     const url = blobUrl(blob);
     // open blob URL in new tab without granting access to window.opener
-    window.open(url, "_blank", "noopener");
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.target = "_blank";
+    anchor.rel = "noopener";
+    anchor.click();
     setTimeout(() => revokeBlobUrl(url), 60_000);
   }, []);
 
