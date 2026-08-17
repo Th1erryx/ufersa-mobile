@@ -20,6 +20,7 @@ export const DEFAULT_NOTIFICATIONS: NotificationSettings = {
   examEveTime: '18:00',
 }
 
+/** Dias da semana na convenção do Android (Calendar.DAY_OF_WEEK: dom=1..sáb=7). */
 const WEEKDAY: Record<string, number> = { seg: 2, ter: 3, qua: 4, qui: 5, sex: 6, sab: 7, dom: 1 }
 const LEAD_MINUTES = 15
 
@@ -35,19 +36,33 @@ interface ScheduledNotification {
   id: number
   title: string
   body: string
+  /** Canal próprio por categoria (aulas/provas/RU) para o usuário gerenciar no Android. */
+  channelId: string
+  /** Alarme inexato: dispara sem exigir permissão de "alarmes exatos" no Android 12+. */
+  isExactNotification: boolean
   schedule: {
     on: {
       weekday?: number
       /** Ano/até dia para notificações pontuais (uma única vez). */
       year?: number
+      /** Mês em base 0 (0=janeiro), como o plugin nativo espera. */
       month?: number
       day?: number
       hour: number
       minute: number
     }
     repeats: boolean
+    allowWhileIdle: boolean
   }
 }
+
+/** Canais de notificação por categoria (Android 8+). Importância alta nas
+ *  aulas/provas (heads-up) e padrão no RU. */
+const CHANNELS = [
+  { id: 'ufersa-aulas', name: 'Aulas', importance: 4 },
+  { id: 'ufersa-provas', name: 'Provas', importance: 4 },
+  { id: 'ufersa-ru', name: 'Restaurante Universitário', importance: 3 },
+] as const
 
 function webSupported(): boolean {
   return typeof window !== 'undefined' && 'Notification' in window
@@ -71,12 +86,14 @@ function nextOccurrence(on: {
   const target = new Date(now)
   target.setHours(on.hour, on.minute, 0, 0)
   if (on.year !== undefined && on.month !== undefined && on.day !== undefined) {
-    target.setFullYear(on.year, on.month - 1, on.day)
+    target.setFullYear(on.year, on.month, on.day)
     return target.getTime()
   }
   let diff = target.getTime() - now.getTime()
   if (on.weekday !== undefined) {
-    let days = on.weekday - (now.getDay() === 0 ? 7 : now.getDay())
+    // on.weekday está na convenção Android (dom=1..sáb=7); getDay() é 0=dom..
+    // 6=sáb, então +1 converte para a mesma escala.
+    let days = on.weekday - (now.getDay() + 1)
     if (days < 0 || (days === 0 && diff <= 0)) days += 7
     diff += days * 86400000
   } else if (diff <= 0) {
@@ -99,7 +116,7 @@ function scheduleWeb(items: ScheduledNotification[]): void {
         }
       }
       if (item.schedule.repeats) {
-        webTimers.push(setTimeout(fire, 86400000))
+        webTimers.push(setTimeout(fire, Math.max(0, nextOccurrence(item.schedule.on) - Date.now())))
       }
     }
     const wait = nextOccurrence(item.schedule.on) - Date.now()
@@ -136,6 +153,21 @@ export async function syncLocalNotifications({
     if (req.display !== 'granted') return
   }
 
+  // Cria os canais por categoria (idempotente no Android; ignora falhas).
+  for (const channel of CHANNELS) {
+    try {
+      await LocalNotifications.createChannel({
+        id: channel.id,
+        name: channel.name,
+        importance: channel.importance,
+        vibration: true,
+        sound: 'default',
+      })
+    } catch {
+      /* canal já existe ou API indisponível */
+    }
+  }
+
   const notifications = buildItems({ entries, subjects, lunch, dinner, settings }).map((n, i) => ({
     ...n,
     id: i + 1,
@@ -161,6 +193,9 @@ function buildItems({
   const notifications: ScheduledNotification[] = []
   let nextId = 1
   const idFor = () => nextId++
+  const channelId = 'ufersa-aulas'
+  const examChannel = 'ufersa-provas'
+  const ruChannel = 'ufersa-ru'
 
   const leadOf = (time: string) => Math.max(0, toMinutes(time) - LEAD_MINUTES)
 
@@ -177,7 +212,8 @@ function buildItems({
     const examOn = (): { year?: number; month?: number; day?: number } => {
       if (!entry.date) return {}
       const [y, m, d] = entry.date.split('-').map(Number)
-      return { year: y, month: m, day: d }
+      // O plugin nativo espera mês em base 0 (0=janeiro); o date string é 1-based.
+      return { year: y, month: m - 1, day: d }
     }
 
     if (entry.kind === 'exam') {
@@ -187,17 +223,19 @@ function buildItems({
       notifications.push({
         id: idFor(),
         title: 'Prova hoje 📝',
-        body: `${name} começa às ${entry.startTime}.`,
-        schedule: { on: { ...onBase, hour, minute }, repeats: !entry.date },
+        body: `${name} começa às ${entry.startTime}. Bom estudo!`,
+        channelId: examChannel,
+        isExactNotification: false,
+        schedule: { on: { ...onBase, hour, minute }, repeats: !entry.date, allowWhileIdle: true },
       })
       if (settings.examEve) {
         const [eh, em] = settings.examEveTime.split(':').map(Number)
         const eveOn: { weekday?: number; year?: number; month?: number; day?: number } = {}
         if (entry.date) {
-          const d = new Date(Number(examOn().year), Number(examOn().month) - 1, Number(examOn().day))
+          const d = new Date(Number(examOn().year), Number(examOn().month), Number(examOn().day))
           d.setDate(d.getDate() - 1)
           eveOn.year = d.getFullYear()
-          eveOn.month = d.getMonth() + 1
+          eveOn.month = d.getMonth()
           eveOn.day = d.getDate()
         } else {
           eveOn.weekday = weekday === 1 ? 7 : weekday - 1
@@ -206,7 +244,9 @@ function buildItems({
           id: idFor(),
           title: 'Prova amanhã 📝',
           body: `${name} é amanhã às ${entry.startTime}. Bom estudo!`,
-          schedule: { on: { ...eveOn, hour: eh, minute: em }, repeats: !entry.date },
+          channelId: examChannel,
+          isExactNotification: false,
+          schedule: { on: { ...eveOn, hour: eh, minute: em }, repeats: !entry.date, allowWhileIdle: true },
         })
       }
     } else if (subject) {
@@ -215,21 +255,25 @@ function buildItems({
         id: idFor(),
         title: 'Hora de aula 🎓',
         body: `${name} começa em breve, às ${entry.startTime}${subject.room ? ` na sala ${subject.room}` : ''}.`,
-        schedule: { on: { weekday, hour, minute }, repeats: true },
+        channelId,
+        isExactNotification: false,
+        schedule: { on: { weekday, hour, minute }, repeats: true, allowWhileIdle: true },
       })
     }
   }
 
   if (settings.ru) {
-    const [lunchStart] = lunch.split('—').map((s) => s.trim())
-    const [dinnerStart] = dinner.split('—').map((s) => s.trim())
+    const [lunchStart, lunchEnd] = lunch.split('—').map((s) => s.trim())
+    const [dinnerStart, dinnerEnd] = dinner.split('—').map((s) => s.trim())
     if (lunchStart) {
       const [lh, lm] = lunchStart.split(':').map(Number)
       notifications.push({
         id: idFor(),
         title: 'Almoço no RU 🍽️',
-        body: `O restaurante já está aberto (almoço até ${lunch.split('—')[1]?.trim() ?? ''}).`,
-        schedule: { on: { hour: lh, minute: lm }, repeats: true },
+        body: `O almoço já está aberto${lunchEnd ? ` (até ${lunchEnd})` : ''}. Bom apetite!`,
+        channelId: ruChannel,
+        isExactNotification: false,
+        schedule: { on: { hour: lh, minute: lm }, repeats: true, allowWhileIdle: true },
       })
     }
     if (dinnerStart) {
@@ -237,8 +281,10 @@ function buildItems({
       notifications.push({
         id: idFor(),
         title: 'Jantar no RU 🍽️',
-        body: `O restaurante já está aberto (jantar até ${dinner.split('—')[1]?.trim() ?? ''}).`,
-        schedule: { on: { hour: dh, minute: dm }, repeats: true },
+        body: `O jantar já está aberto${dinnerEnd ? ` (até ${dinnerEnd})` : ''}. Bom apetite!`,
+        channelId: ruChannel,
+        isExactNotification: false,
+        schedule: { on: { hour: dh, minute: dm }, repeats: true, allowWhileIdle: true },
       })
     }
   }
