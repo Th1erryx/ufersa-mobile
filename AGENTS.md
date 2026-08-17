@@ -2,6 +2,19 @@
 
 Guia de contexto do projeto. Leia sempre que for iniciar uma sessão para não se perder.
 
+## Documentação
+
+- **`README.md`** — visão geral, funcionalidades, stack e "começando" (público).
+- **`LICENSE.md`** — licença personalizada: uso pessoal permitido; uso
+  **institucional ou comercial exige autorização prévia e por escrito** do autor
+  (Thierry de Andrade Fontes). Não assumir licença MIT/GPL ao citar o projeto.
+- **`docs/ARCHITECTURE.md`** — arquitetura e fluxo de dados.
+- **`docs/STORAGE.md`** — chaves de armazenamento e migrações.
+- **`docs/BUILDING.md`** — build web/PWA/APK e regeneração de ícones.
+- **`CONTRIBUTING.md`** — como contribuir.
+- **`SECURITY.md`** — modelo de ameaças e `npm audit`.
+- **`CHANGELOG.md`** — histórico de versões.
+
 ## Visão geral
 
 **UFERSA Mobile** — carteira universitária digital da UFERSA (QR do RU, grade de horários, disciplinas, materiais). App mobile-first, 100% offline: todos os dados são locais (mock + localStorage + disco/IndexedDB), não há backend nem chamadas de rede. Distribuído como **APK** via Capacitor (e também PWA).
@@ -92,7 +105,7 @@ Estas escolhas foram deliberadas — respeite-as e **não as reverta sem antes c
 - **Campus configurável**: `src/data/campuses.ts` (Mossoró, Angicos, Caraúbas, Pau dos Ferros — padrão Pau dos Ferros) + `useCampus` (localStorage `campus`); refletido na tela do RU.
 - **Grade editável** via modais (disciplinas + eventos avulsos + **provas**) em `ScheduleContext`. Provas (`ScheduleEntry.kind === 'exam'`) têm destaque visual (rosa), modal próprio (`EventDetailModal`), filtram no `WeeklyGrid` e entram na contagem regressiva da Home (`src/lib/schedule.ts` → `upcomingExams`).
 - **Materiais por disciplina**: importar em lote (vários arquivos de uma vez), renomear, classificar por categoria (lista de exercícios, slides, prova, livro, anotações, outros), buscar, filtrar, **fixar (pin)** no topo e **reordenar manualmente** (mover acima/abaixo — só dentro da mesma disciplina), abrir, compartilhar e excluir (PDF, Word, slides, imagens…). Binário no disco do app (Capacitor `Directory.Data/materials/{id}`) ou IndexedDB `ufersa-mobile-files` (migra de `ufersa-pocket-files`).
-- **Notificações locais** (`src/lib/notifications.ts`): aulas, provas e aberturas do RU agendadas no dispositivo via `@capacitor/local-notifications` (importado dinamicamente, no APK/Android). No navegador/PWA usa a **Web Notifications API** (agenda com `setTimeout` até a próxima ocorrência, reagenda após disparar) — limitação: no web só disparam com o app aberto. Toggles em Configurações (localStorage `notifications`), sincronizadas por `useNotificationSync` quando a grade/campus/preferências mudam. A permissão é solicitada na abertura do app **e** ao habilitar um toggle. **Não funciona no iOS**: o projeto não tem a plataforma `ios/` (precisa `npm i @capacitor/ios` + `npx cap add ios` + Xcode), e o Safari iOS não expõe a Web Notifications API.
+- **Notificações locais** (`src/lib/notifications.ts`): aulas, provas e aberturas do RU agendadas no dispositivo via `@capacitor/local-notifications` (importado dinamicamente, no APK/Android). No navegador/PWA usa a **Web Notifications API** (agenda com `setTimeout` até a próxima ocorrência, reagenda após disparar) — limitação: no web só disparam com o app aberto. Toggles em Configurações (localStorage `notifications`), sincronizadas por `useNotificationSync` quando a grade/campus/preferências mudam. A permissão é solicitada na abertura do app **e** ao habilitar um toggle. **Não funciona no iOS**: o projeto não tem a plataforma `ios/` (precisa `npm i @capacitor/ios` + `npx cap add ios` + Xcode), e o Safari iOS não expõe a Web Notifications API. **Canais Android por categoria** (`ufersa-aulas`, `ufersa-provas`, `ufersa-ru`; importância alta em aulas/provas) e textos contextuais; alarmes **inexatos** + `allowWhileIdle` (dispensam a permissão especial de "alarmes exatos" no Android 12+ e disparam com o app fechado). Datas de provas usam **mês em base 0** no agendamento nativo.
 - **Backup/restore** (`src/lib/backup.ts`): exporta um JSON único com grade, perfil, QR, campus, tema, notificações, **links personalizados** e materiais (incluindo binários base64). Restaura tudo de volta (inclui `importData` no `ScheduleContext`, `importMaterials` no `MaterialsContext` e `applyLinks` para `useCustomLinks`).
 - **Links úteis personalizados**: além dos atalhos oficiais, o usuário pode adicionar/remover links próprios na Home (`useCustomLinks`, localStorage `quickLinks`; modal `QuickLinkModal`). Entram no backup/restore.
 - **Apagar todos os dados**: em Configurações → Dados, botão de exclusão total com dupla confirmação (grade, perfil, QR, links, notificações, tema, campus e materiais incluindo binários via `clearMaterials` no `MaterialsContext`).
@@ -103,6 +116,7 @@ Estas escolhas foram deliberadas — respeite-as e **não as reverta sem antes c
 - **Identidade visual**: logo QR+capelo (fonte `design/logo.svg`) em favicon, PWA e launcher Android (legado + adaptive icon + splash verde `#1d6a43`).
 - Perfil, tema light/dark/system e notificações (reais no APK, Web Notifications no navegador) nas Configurações.
 - PWA configurada (manifest + service worker no build). **Sem deploy feito** — PWA ainda não hospedada. `vercel.json` já existe (headers de segurança + SPA rewrite) para o deploy na Vercel.
+- **Documentação completa**: `README.md`, `LICENSE.md` (licença personalizada), `CONTRIBUTING.md`, `SECURITY.md`, `docs/` e `CHANGELOG.md`. Metadados de licença/autor/repositório também no `package.json`.
 - **Versão**: `1.2.0` (package.json + `versionCode 2`/`versionName "1.2.0"` no Android).
 
 ## Roadmap
